@@ -1,0 +1,4 @@
+- 进入子目录工作时，先看最近的 `AGENTS.md`。
+- 默认不要 commit；不要把 credentials、登录态、会话数据或不可读 blob 直接放进 git。
+- 公共 PowerShell 封装函数统一使用 `InitWin-` 前缀；改 `*.ps1` 后做一次 PowerShell 语法检查。
+- 所有 Apply 操作请保持幂等。

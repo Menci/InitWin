@@ -1,0 +1,2 @@
+- 只保留需要恢复的模块配置，不要镜像整个 `%LocalAppData%\Microsoft\PowerToys\`。
+- 改模块配置前，先确认对应模块已在 `settings.json` 中启用。

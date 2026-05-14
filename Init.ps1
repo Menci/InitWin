@@ -532,3 +532,17 @@ if ($mapleAlreadyInstalled) {
     }
     Remove-Item -Recurse -Force $mapleZip,$mapleTmp -ErrorAction SilentlyContinue
 }
+
+Step 'AppConfig: 应用各 app 的配置'
+# 遍历 AppConfig/*/Apply.ps1，每个脚本负责把自己同目录下的配置覆盖到目标 app
+$appConfigRoot = Join-Path $PSScriptRoot 'AppConfig'
+if (Test-Path $appConfigRoot) {
+    Get-ChildItem -Path $appConfigRoot -Directory | ForEach-Object {
+        $apply = Join-Path $_.FullName 'Apply.ps1'
+        if (Test-Path $apply) {
+            Write-Host "Apply $($_.Name)"
+            try { & $apply } catch { Write-Warning "$($_.Name) Apply.ps1 失败：$_" }
+        }
+    }
+}
+

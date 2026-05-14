@@ -1,0 +1,110 @@
+{
+    "$help": "https://aka.ms/terminal-documentation",
+    "$schema": "https://aka.ms/terminal-profiles-schema",
+    "actions": [],
+    "copyFormatting": "none",
+    "copyOnSelect": false,
+    "defaultProfile": "{58ad8b0c-3ef8-5f4d-bc6f-13e4c00f2530}",
+    "keybindings": 
+    [
+        {
+            "id": null,
+            "keys": "ctrl+c"
+        },
+        {
+            "id": null,
+            "keys": "ctrl+v"
+        },
+        {
+            "id": null,
+            "keys": "ctrl+shift+f"
+        },
+        {
+            "id": null,
+            "keys": "alt+shift+d"
+        }
+    ],
+    "launchMode": "maximized",
+    "newTabMenu": 
+    [
+        {
+            "type": "remainingProfiles"
+        }
+    ],
+    "profiles": 
+    {
+        "defaults": 
+        {
+            "colorScheme": "Breeze",
+            "cursorShape": "filledBox",
+            "elevate": false,
+            "font": 
+            {
+                "face": "Maple Mono NF CN",
+                "size": 10
+            },
+            "historySize": 900000
+        },
+        "list": 
+        [
+            {
+                "guid": "{58ad8b0c-3ef8-5f4d-bc6f-13e4c00f2530}",
+                "hidden": false,
+                "name": "Debian",
+                "source": "Windows.Terminal.Wsl"
+            },
+            {
+                "guid": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+                "hidden": false,
+                "name": "PowerShell",
+                "source": "Windows.Terminal.PowershellCore"
+            },
+            {
+                "commandline": "%SystemRoot%\\System32\\cmd.exe",
+                "guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
+                "hidden": false,
+                "name": "Command Prompt"
+            },
+            {
+                "guid": "{2ece5bfe-50ed-5f3a-ab87-5cd4baafed2b}",
+                "hidden": false,
+                "name": "Git Bash",
+                "source": "Git"
+            },
+            {
+                "commandline": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+                "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
+                "hidden": false,
+                "name": "Windows PowerShell"
+            }
+        ]
+    },
+    "schemes": 
+    [
+        {
+            "background": "#232627",
+            "black": "#232627",
+            "blue": "#1D99F3",
+            "brightBlack": "#7F8C8D",
+            "brightBlue": "#3DAEE9",
+            "brightCyan": "#16A085",
+            "brightGreen": "#1CDC9A",
+            "brightPurple": "#8E44AD",
+            "brightRed": "#C0392B",
+            "brightWhite": "#FFFFFF",
+            "brightYellow": "#FDBC4B",
+            "cursorColor": "#FFFFFF",
+            "cyan": "#1ABC9C",
+            "foreground": "#FCFCFC",
+            "green": "#11D116",
+            "name": "Breeze",
+            "purple": "#9B59B6",
+            "red": "#ED1515",
+            "selectionBackground": "#FFFFFF",
+            "white": "#FCFCFC",
+            "yellow": "#F67400"
+        }
+    ],
+    "themes": [],
+    "windowingBehavior": "useExisting"
+}
