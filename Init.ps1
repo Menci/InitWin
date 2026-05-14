@@ -68,37 +68,34 @@ Set-ItemProperty -Path $Personalize -Name 'SystemUsesLightTheme' -Type DWord -Va
 $Accent = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Accent'
 $DWM    = 'HKCU:\Software\Microsoft\Windows\DWM'
 
-# AccentColor / StartColor / *Menu (ABGR)：#C239B3 -> 0xFFB339C2
-Set-ItemProperty -Path $Accent -Name 'AccentColor'     -Type DWord -Value 0xFFB339C2
-Set-ItemProperty -Path $Accent -Name 'StartColor'      -Type DWord -Value 0xFFB339C2
+# 下面的值 dump 自一台事先在 Settings → Personalization → Colors 选过 Orchid Light 的机器。
+# 选用预定义 accent 时 Settings 不写 Accent\AccentColor 和 Accent\StartColor (HKCU 上不存在)，
+# 只写 *Menu 系列和 DWM\AccentColor，所以这里也不写它们。
+
 Set-ItemProperty -Path $Accent -Name 'AccentColorMenu' -Type DWord -Value 0xFFB339C2
-Set-ItemProperty -Path $Accent -Name 'StartColorMenu'  -Type DWord -Value 0xFFB339C2
-# DWM\AccentColor (ABGR)：0xFFB339C2
+# StartColorMenu 是同列下 "Orchid" 暗色变体 #A030AE
+Set-ItemProperty -Path $Accent -Name 'StartColorMenu'  -Type DWord -Value 0xFFAE30A0
+
+# DWM\AccentColor (ABGR)
 Set-ItemProperty -Path $DWM -Name 'AccentColor'           -Type DWord -Value 0xFFB339C2
-# DWM\ColorizationColor / Afterglow (ARGB)：alpha 0xC2 + #C239B3 -> 0xC2C239B3
-Set-ItemProperty -Path $DWM -Name 'ColorizationColor'     -Type DWord -Value 0xC2C239B3
-Set-ItemProperty -Path $DWM -Name 'ColorizationAfterglow' -Type DWord -Value 0xC2C239B3
-# 颜色饱和度平衡（典型值 89）
+# DWM\ColorizationColor / Afterglow (ARGB)：alpha 0xC4
+Set-ItemProperty -Path $DWM -Name 'ColorizationColor'     -Type DWord -Value 0xC4C239B3
+Set-ItemProperty -Path $DWM -Name 'ColorizationAfterglow' -Type DWord -Value 0xC4C239B3
 Set-ItemProperty -Path $DWM -Name 'ColorizationColorBalance' -Type DWord -Value 89
-# 关闭 "Show accent color on title bars and Start/Taskbar"
 Set-ItemProperty -Path $DWM         -Name 'ColorPrevalence' -Type DWord -Value 0
 Set-ItemProperty -Path $Personalize -Name 'ColorPrevalence' -Type DWord -Value 0
 
-# AccentPalette: 8 阶渐变。slot 顺序为 Light3 → Light2 → Light1 → Accent → Dark1 → Dark2 → Dark3
-# → MotionAccent(alpha=0)，每槽 RGBA。Microsoft 真实算法在 Windows.UI.dll 私有的
-# CColorTreatmentManager（UISettings.GetColorValue）里，未公开；社区算法（winaccent）
-# 与真值有偏差；UISettings 在我们写完注册表后也不会立刻刷新（其内部缓存依赖 shell 重启
-# 触发）。所以这里直接写一组按 #C239B3 推算的近似渐变，第 4 槽锁定为主 accent。
-# 如需 100% 一致：装好后在 Settings 里点一次 Orchid Light，再 reg query 替换此处。
+# AccentPalette: 8 槽 × RGBA，dump 自已选 Orchid Light 的机器。
+# Microsoft 真实算法在 Windows.UI.dll 的 CColorTreatmentManager 私有函数里，未公开。
 Set-ItemProperty -Path $Accent -Name 'AccentPalette' -Type Binary -Value ([byte[]](
-    0xF6,0xD7,0xF1, 0xFF,
-    0xEC,0xAE,0xE3, 0xFF,
-    0xD7,0x73,0xCA, 0xFF,
-    0xC2,0x39,0xB3, 0xFF,
-    0x9C,0x2E,0x90, 0xFF,
-    0x74,0x22,0x6B, 0xFF,
-    0x4E,0x17,0x47, 0xFF,
-    0x29,0x0C,0x25, 0x00
+    0xF4,0xB2,0xF1, 0x00,
+    0xE1,0x83,0xD9, 0x00,
+    0xCB,0x4F,0xBF, 0x00,
+    0xC2,0x39,0xB3, 0x00,
+    0xAE,0x30,0xA0, 0x00,
+    0x7F,0x1D,0x75, 0x00,
+    0x54,0x0A,0x4D, 0x00,
+    0x2D,0x7D,0x9A, 0x00
 ))
 
 # 颜色：打开 Transparency effects
@@ -133,7 +130,9 @@ Set-ItemProperty -Path $SystemPolicy -Name 'DisableLogonBackgroundImage' -Type D
 $CDM = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager'
 Set-ItemProperty -Path $CDM -Name 'RotatingLockScreenEnabled'        -Type DWord -Value 0
 Set-ItemProperty -Path $CDM -Name 'RotatingLockScreenOverlayEnabled' -Type DWord -Value 0
+# 同一开关 ("Get fun facts on lock screen") 在不同 Win11 版本下用过两个 ID
 Set-ItemProperty -Path $CDM -Name 'SubscribedContent-338387Enabled'  -Type DWord -Value 0
+Set-ItemProperty -Path $CDM -Name 'SubscribedContent-338380Enabled'  -Type DWord -Value 0
 
 # 锁屏：关闭锁屏 Widgets（Windows 11 23H2+ 引入）和 "Suggest widgets for your lock screen"
 # 正确的 key 在 PersonalizationCSP 下；之前用的 Dsh\AllowLockScreenWidgets 不存在。
@@ -403,6 +402,9 @@ powercfg /change monitor-timeout-dc 0
 powercfg /change hibernate-timeout-ac 0
 powercfg /change hibernate-timeout-dc 0
 
+# 让 explorer.exe 重启以应用任务栏相关的更改；放在这里以避免后续安装过程被打断
+Stop-Process -Name explorer -Force
+
 # ============================================================
 # 软件安装阶段（Store / winget / installer 等，会跑较久）。
 # 新加的"安装类"项目，除非特别说明，都应该插入到这一行之下。
@@ -485,10 +487,11 @@ $wingetApps = [ordered]@{
     # Office 365 Apps：winget 包 Microsoft.Office 实际上调用 Office Deployment Tool
     # （ClickToRun 的部署器），等价于官网 ClickToRun 部署，但 winget 一行搞定。
     'Office 365 Apps'    = 'Microsoft.Office'
-    # .NET SDK 最新 LTS。每出新一代 LTS 时把这里的版本号刷新。
-    '.NET SDK'           = 'Microsoft.DotNet.SDK.9'
+    '.NET SDK'           = 'Microsoft.DotNet.SDK.10'
     'VLC'                = 'VideoLAN.VLC'
     'Wireshark'          = 'WiresharkFoundation.Wireshark'
+    'Azure CLI'          = 'Microsoft.AzureCLI'
+    'kubectl'            = 'Kubernetes.kubectl'
 }
 foreach ($name in $wingetApps.Keys) {
     $id = $wingetApps[$name]
@@ -529,6 +532,3 @@ if ($mapleAlreadyInstalled) {
     }
     Remove-Item -Recurse -Force $mapleZip,$mapleTmp -ErrorAction SilentlyContinue
 }
-
-# 让 explorer.exe 重启以应用任务栏相关的更改
-Stop-Process -Name explorer -Force
