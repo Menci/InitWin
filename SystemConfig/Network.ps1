@@ -8,9 +8,16 @@ InitWin-DefineEntry -Id System.Network.Profile -Name '网络' -Validate {
         if ($registryResult.Status -ne 'Desired') { $results.Add($registryResult) }
     }
 
-    $publicProfiles = Get-NetConnectionProfile | Where-Object { $_.NetworkCategory -ne 'Private' }
-    if ($publicProfiles) {
-        $results.Add((InitWin-NewValidationResult -Status Unset -Target 'network profiles' -Current 'non-private profile exists' -Expected 'all current profiles private'))
+    foreach ($profile in @(Get-NetConnectionProfile | Where-Object { $_.NetworkCategory -ne 'Private' })) {
+        $interfaceName = $profile.InterfaceAlias
+        if (-not $interfaceName) { $interfaceName = $profile.Name }
+        if (-not $interfaceName) { $interfaceName = "interface index $($profile.InterfaceIndex)" }
+
+        $results.Add((InitWin-NewValidationResult `
+            -Status Unset `
+            -Target "network interface `"$interfaceName`"" `
+            -Current $profile.NetworkCategory `
+            -Expected 'Private'))
     }
     if (-not (Test-Path -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\Network\NewNetworkWindowOff')) {
         $results.Add((InitWin-NewValidationResult -Status Unset -Target 'registry key: HKLM:\SYSTEM\CurrentControlSet\Control\Network\NewNetworkWindowOff' -Current '<missing>' -Expected 'present'))
