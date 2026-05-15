@@ -12,56 +12,86 @@ $windowsFeatureNames = @(
     'Containers-DisposableClientVM'
 )
 
-InitWin-DefineEntry -Id System.Features.WindowsCapabilities -Validate {
-    foreach ($capability in $windowsCapabilityNames) {
-        $state = Get-WindowsCapability -Online -Name $capability -ErrorAction SilentlyContinue
-        if ($null -eq $state) {
-            return InitWin-NewValidationResult -Status Unset -Target "Windows capability: $capability" -Current '<missing>' -Expected 'Installed'
-        }
+InitWin-DefineEntry -Id System.Features.WindowsCapabilities -Name 'Optional features (FoD)' -Validate {
+    $capabilityNamesLiteral = InitWin-QuotePowerShellStringArray $windowsCapabilityNames
+    $script = @"
+`$results = foreach (`$capability in $capabilityNamesLiteral) {
+    `$state = Get-WindowsCapability -Online -Name `$capability -ErrorAction SilentlyContinue
+    [pscustomobject]@{
+        Name = `$capability
+        State = if (`$null -eq `$state) { '<missing>' } else { [string] `$state.State }
+    }
+}
+`$results | ConvertTo-Json -Depth 4
+"@
+    $states = @(InitWin-InvokeWindowsPowerShellJson -Script $script)
+    $results = [System.Collections.Generic.List[object]]::new()
+    foreach ($state in $states) {
         if ($state.State -ne 'Installed') {
-            return InitWin-NewValidationResult -Status Unset -Target "Windows capability: $capability" -Current $state.State -Expected 'Installed'
+            $results.Add((InitWin-NewValidationResult -Status Unset -Target "Windows capability: $($state.Name)" -Current $state.State -Expected 'Installed'))
         }
     }
 
+    if ($results.Count -gt 0) { return $results }
     InitWin-NewValidationResult -Status Desired
 } -Apply {
-    InitWin-WriteStep 'Optional features (FoD)'
-    foreach ($capability in $windowsCapabilityNames) {
-        $state = Get-WindowsCapability -Online -Name $capability -ErrorAction SilentlyContinue
-        if ($null -eq $state) {
-            InitWin-WriteDetail "Capability 不存在于本机：$capability" -ForegroundColor Yellow
-            continue
-        }
-        if ($state.State -ne 'Installed') {
-            InitWin-WriteDetail "Installing optional feature: $capability"
-            Add-WindowsCapability -Online -Name $capability | Out-Null
-        }
+    $capabilityNamesLiteral = InitWin-QuotePowerShellStringArray $windowsCapabilityNames
+    $script = @"
+foreach (`$capability in $capabilityNamesLiteral) {
+    `$state = Get-WindowsCapability -Online -Name `$capability -ErrorAction SilentlyContinue
+    if (`$null -eq `$state) {
+        Write-Warning "Capability 不存在于本机：`$capability"
+        continue
+    }
+    if (`$state.State -ne 'Installed') {
+        Write-Host "Installing optional feature: `$capability"
+        Add-WindowsCapability -Online -Name `$capability | Out-Null
+    }
+}
+"@
+    foreach ($line in @(InitWin-InvokeWindowsPowerShell -Script $script -CaptureOutput)) {
+        InitWin-WriteDetail ([string] $line)
     }
 }
 
-InitWin-DefineEntry -Id System.Features.WindowsOptionalFeatures -Validate {
-    foreach ($feature in $windowsFeatureNames) {
-        $state = Get-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction SilentlyContinue
-        if ($null -eq $state) {
-            return InitWin-NewValidationResult -Status Unset -Target "Windows optional feature: $feature" -Current '<missing>' -Expected 'Enabled'
-        }
+InitWin-DefineEntry -Id System.Features.WindowsOptionalFeatures -Name 'Windows features' -Validate {
+    $featureNamesLiteral = InitWin-QuotePowerShellStringArray $windowsFeatureNames
+    $script = @"
+`$results = foreach (`$feature in $featureNamesLiteral) {
+    `$state = Get-WindowsOptionalFeature -Online -FeatureName `$feature -ErrorAction SilentlyContinue
+    [pscustomobject]@{
+        Name = `$feature
+        State = if (`$null -eq `$state) { '<missing>' } else { [string] `$state.State }
+    }
+}
+`$results | ConvertTo-Json -Depth 4
+"@
+    $states = @(InitWin-InvokeWindowsPowerShellJson -Script $script)
+    $results = [System.Collections.Generic.List[object]]::new()
+    foreach ($state in $states) {
         if ($state.State -ne 'Enabled') {
-            return InitWin-NewValidationResult -Status Unset -Target "Windows optional feature: $feature" -Current $state.State -Expected 'Enabled'
+            $results.Add((InitWin-NewValidationResult -Status Unset -Target "Windows optional feature: $($state.Name)" -Current $state.State -Expected 'Enabled'))
         }
     }
 
+    if ($results.Count -gt 0) { return $results }
     InitWin-NewValidationResult -Status Desired
 } -Apply {
-    InitWin-WriteStep 'Windows features'
-    foreach ($feature in $windowsFeatureNames) {
-        $state = Get-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction SilentlyContinue
-        if ($null -eq $state) {
-            InitWin-WriteDetail "Windows feature 不存在于本机：$feature" -ForegroundColor Yellow
-            continue
-        }
-        if ($state.State -ne 'Enabled') {
-            InitWin-WriteDetail "Enabling Windows feature: $feature"
-            Enable-WindowsOptionalFeature -Online -FeatureName $feature -All -NoRestart | Out-Null
-        }
+    $featureNamesLiteral = InitWin-QuotePowerShellStringArray $windowsFeatureNames
+    $script = @"
+foreach (`$feature in $featureNamesLiteral) {
+    `$state = Get-WindowsOptionalFeature -Online -FeatureName `$feature -ErrorAction SilentlyContinue
+    if (`$null -eq `$state) {
+        Write-Warning "Windows feature 不存在于本机：`$feature"
+        continue
+    }
+    if (`$state.State -ne 'Enabled') {
+        Write-Host "Enabling Windows feature: `$feature"
+        Enable-WindowsOptionalFeature -Online -FeatureName `$feature -All -NoRestart | Out-Null
+    }
+}
+"@
+    foreach ($line in @(InitWin-InvokeWindowsPowerShell -Script $script -CaptureOutput)) {
+        InitWin-WriteDetail ([string] $line)
     }
 }

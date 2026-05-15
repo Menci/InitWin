@@ -1,3 +1,6 @@
 - 脚本文件名对应 entry id 的 Section：`System.Section.EntryName`。
 - 注册表类配置把 desired properties 提成变量，`-Validate` / `-Apply` 共用。
+- `System.Security.ExecutionPolicy` 只覆盖 Windows PowerShell registry policy，放在 System phase 开头，让当前脚本后续执行不被默认 policy 阻碍。
+- PowerShell 7+ 的 CurrentUser 和 LocalMachine `$PSHOME\powershell.config.json` execution policy 由 `Packages.WinGet.PowerShell` 在安装/验证 PowerShell 包时处理。
+- Windows capability / optional feature 查询和安装使用 Windows PowerShell host 执行 DISM cmdlets，避免 PowerShell 7 下 `Get-WindowsCapability` / `Get-WindowsOptionalFeature` 长时间卡住后报 `Class not registered`。
 - 不在 entry 里表达顺序关系；改顺序只改顶层执行计划。
