@@ -4,9 +4,12 @@
 - 本地配置文件是 `InitWin.config.psd1`，不要提交；提交可参考的 `InitWin.config.example.psd1`。
 - `IgnoredEntries` 支持完整 entry id 或整段 `*` 通配，如 `Packages.MicrosoftStore.*`；匹配的 entry 运行时输出 `[ignored]`，不执行 `-Validate` / `-Apply`。
 - entry id 使用 `System.Section.EntryName` / `App.AppName.EntryName` / `Packages.Source.EntryName`；每个 entry 都写 `-Validate`。
-- 手写 `InitWin-NewValidationResult` 时写 `-Target`，让 dry run 能显示正在 diff 的配置项。
+- `InitWin-DefineEntry -Name` 是 apply 时显示的 step 名；普通 entry 不要在 `-Apply` 里手写 `InitWin-WriteStep`。
+- `-Validate` 可以返回单个或多个 `InitWin-NewValidationResult`；同一个 entry 有多个不一致时应尽量全部返回，让 dry run 一次显示所有 diff。
+- 手写 `InitWin-NewValidationResult` 时写 `-Target` / `-Current` / `-Expected`，让框架统一输出 diff；entry 不要把 `current ... expected ...` 拼进自己的日志或 entry summary。
+- dry run 的单行 value diff 由 `InitWin-WriteValueDiff` 保持 inline 并分段着色；文件、set、多行 value diff 统一走 `InitWin-WriteDiffLine`。
 - `InitWin.ps1 -DryRun` 只执行 `-Validate`，不执行 `-Apply`。
 - 公共 PowerShell 封装函数统一使用 `InitWin-` 前缀；改 `*.ps1` 后做一次 PowerShell 语法检查。
 - `Lib/InitWin.Core.ps1` 只做有序加载，公共函数按职责放进相邻的 `Lib/InitWin.*.ps1`。
-- 输出进度用 `InitWin-WritePhaseDetail` / `InitWin-WriteStep` / `InitWin-WriteDetail`；需要显示 native command 输出时用 `InitWin-InvokeNative`。
+- 输出进度用 `InitWin-WritePhaseDetail` / `InitWin-WriteDetail`；需要显示 native command 输出时用 `InitWin-InvokeNative`。
 - 所有配置应用操作请保持幂等。

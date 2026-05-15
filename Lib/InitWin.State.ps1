@@ -41,6 +41,7 @@ function InitWin-DefineEntry {
     param(
         [Parameter(Mandatory)]
         [string] $Id,
+        [string] $Name = $null,
         [AllowNull()]
         [string] $Profile = $null,
         [scriptblock] $Validate = $null,
@@ -57,6 +58,7 @@ function InitWin-DefineEntry {
 
     $script:InitWinEntries[$Id] = [pscustomobject]@{
         Id = $Id
+        Name = $Name
         Profile = $Profile
         Validate = $Validate
         Apply = $Apply

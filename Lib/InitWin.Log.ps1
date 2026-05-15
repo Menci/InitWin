@@ -33,16 +33,20 @@ function InitWin-WriteDetail {
     InitWin-WriteLogLines -Prefix '│  │    ' -Message $Message -ForegroundColor $ForegroundColor
 }
 
+function InitWin-WriteDetailSegments {
+    param([Parameter(Mandatory)][object[]] $Segments)
+
+    InitWin-WriteLogSegments -Prefix '│  │    ' -Segments $Segments
+}
+
 function InitWin-WriteEntry {
     param(
         [Parameter(Mandatory)][string] $Id,
         [Parameter(Mandatory)][string] $State,
-        [string] $Summary = $null,
         [ConsoleColor] $ForegroundColor = [ConsoleColor]::Gray
     )
 
     $message = "$Id  [$State]"
-    if ($Summary) { $message = "$message  $Summary" }
     InitWin-WriteLogLines -Prefix '│  ├─ ' -Message $message -ForegroundColor $ForegroundColor
 }
 
@@ -87,4 +91,26 @@ function InitWin-WriteLogLines {
     foreach ($line in ([string] $Message -split '\r?\n')) {
         Write-Host "$Prefix$line" -ForegroundColor $ForegroundColor
     }
+}
+
+function InitWin-WriteLogSegments {
+    param(
+        [Parameter(Mandatory)][string] $Prefix,
+        [Parameter(Mandatory)][object[]] $Segments
+    )
+
+    Write-Host $Prefix -NoNewline
+    foreach ($segment in $Segments) {
+        if ($segment -is [hashtable]) {
+            $text = [string] $segment['Text']
+            $foregroundColor = $segment['ForegroundColor']
+        } else {
+            $text = [string] $segment.Text
+            $foregroundColor = $segment.ForegroundColor
+        }
+
+        if ($null -eq $foregroundColor) { $foregroundColor = [ConsoleColor]::Gray }
+        Write-Host $text -ForegroundColor $foregroundColor -NoNewline
+    }
+    Write-Host ''
 }

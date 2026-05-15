@@ -24,15 +24,14 @@ function InitWin-WriteValueDiff {
         [AllowNull()][object] $Expected
     )
 
-    if ($Target) { InitWin-WriteDetail $Target -ForegroundColor DarkCyan }
-
     $currentText = InitWin-FormatValidationValue $Current
     $expectedText = InitWin-FormatValidationValue $Expected
     if (($currentText -notmatch '\r|\n') -and ($expectedText -notmatch '\r|\n')) {
-        InitWin-WriteDetail "current $(InitWin-EscapeValidationValue $currentText), expected $(InitWin-EscapeValidationValue $expectedText)"
+        InitWin-WriteValueDiffLine -Target $Target -CurrentText $currentText -ExpectedText $expectedText
         return
     }
 
+    if ($Target) { InitWin-WriteDetail $Target -ForegroundColor DarkCyan }
     InitWin-WriteDiffLine '--- current'
     InitWin-WriteDiffLine '+++ expected'
     foreach ($line in ($currentText -split '\r?\n')) {
@@ -43,44 +42,24 @@ function InitWin-WriteValueDiff {
     }
 }
 
-function InitWin-GetValueDiffSummary {
+function InitWin-WriteValueDiffLine {
     param(
         [string] $Target = $null,
-        [AllowNull()][object] $Current,
-        [AllowNull()][object] $Expected
+        [Parameter(Mandatory)][AllowEmptyString()][string] $CurrentText,
+        [Parameter(Mandatory)][AllowEmptyString()][string] $ExpectedText
     )
 
-    $currentText = InitWin-FormatValidationValue $Current
-    $expectedText = InitWin-FormatValidationValue $Expected
-    if (($currentText -match '\r|\n') -or ($expectedText -match '\r|\n')) { return $null }
-
-    $valueSummary = "current $(InitWin-EscapeValidationValue $currentText), expected $(InitWin-EscapeValidationValue $expectedText)"
-    if ($Target) { return "$Target`: $valueSummary" }
-    $valueSummary
-}
-
-function InitWin-GetValidationDiffSummary {
-    param([Parameter(Mandatory)][object] $Validation)
-
-    if ($Validation.Reason) { return $null }
-    if ($Validation.Diff -eq 'Set') { return $null }
-
-    if (($null -ne $Validation.Current) -and ($null -ne $Validation.Expected)) {
-        if ((InitWin-TestExistingFilePath $Validation.Current) -and (InitWin-TestExistingFilePath $Validation.Expected)) {
-            return $null
-        }
-
-        return InitWin-GetValueDiffSummary -Target $Validation.Target -Current $Validation.Current -Expected $Validation.Expected
+    $segments = [System.Collections.Generic.List[object]]::new()
+    if ($Target) {
+        $segments.Add([pscustomobject]@{ Text = $Target; ForegroundColor = [ConsoleColor]::DarkCyan })
+        $segments.Add([pscustomobject]@{ Text = ': '; ForegroundColor = [ConsoleColor]::Gray })
     }
+    $segments.Add([pscustomobject]@{ Text = 'current '; ForegroundColor = [ConsoleColor]::Gray })
+    $segments.Add([pscustomobject]@{ Text = InitWin-EscapeValidationValue $CurrentText; ForegroundColor = [ConsoleColor]::Red })
+    $segments.Add([pscustomobject]@{ Text = ', expected '; ForegroundColor = [ConsoleColor]::Gray })
+    $segments.Add([pscustomobject]@{ Text = InitWin-EscapeValidationValue $ExpectedText; ForegroundColor = [ConsoleColor]::Green })
 
-    if ($null -ne $Validation.Current) {
-        return InitWin-GetValueDiffSummary -Target $Validation.Target -Current $Validation.Current -Expected '<unset>'
-    }
-    if ($null -ne $Validation.Expected) {
-        return InitWin-GetValueDiffSummary -Target $Validation.Target -Current '<unset>' -Expected $Validation.Expected
-    }
-
-    $null
+    InitWin-WriteDetailSegments -Segments $segments
 }
 
 function InitWin-EscapeValidationValue {
@@ -116,8 +95,14 @@ function InitWin-WriteSetDiff {
 
 function InitWin-WriteLineDiff {
     param(
-        [Parameter(Mandatory)][string[]] $CurrentLines,
-        [Parameter(Mandatory)][string[]] $ExpectedLines
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [AllowEmptyString()]
+        [string[]] $CurrentLines,
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [AllowEmptyString()]
+        [string[]] $ExpectedLines
     )
 
     InitWin-WriteDiffLine '--- current'
@@ -199,7 +184,9 @@ function InitWin-WriteFileDiff {
 
     InitWin-WriteDetail "file: $CurrentPath" -ForegroundColor DarkCyan
     InitWin-WriteDetail "expected source: $ExpectedPath" -ForegroundColor DarkCyan
-    InitWin-WriteLineDiff -CurrentLines (InitWin-ReadTextLines $CurrentPath) -ExpectedLines (InitWin-ReadTextLines $ExpectedPath)
+    $currentLines = @(InitWin-ReadTextLines $CurrentPath)
+    $expectedLines = @(InitWin-ReadTextLines $ExpectedPath)
+    InitWin-WriteLineDiff -CurrentLines $currentLines -ExpectedLines $expectedLines
 }
 
 function InitWin-WriteValidationDiff {
