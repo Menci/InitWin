@@ -1,3 +1,4 @@
-- `tdata` 下文件默认按高风险处理，新增前先确认它不是认证、会话或本地密码材料。
-- `settingss` 不能当普通配置文件；如果支持它，提交可读源表示和生成逻辑，不要直接提交 blob。
-- 若以后加入 `settingss` 处理代码，把版本假设和已支持字段记在这里。
+- `settingss` 只通过 `TelegramSettings.ps1` 处理：TDF + Qt 5.1 QDataStream + empty-passcode legacy local key + AES-IGE，当前只 patch `dbiApplicationSettings/Core::Settings`。
+- `settingss` 不存在时不要创建占位文件；让用户启动 Telegram 生成，再由脚本 patch。
+- `settings-overrides.psd1` 只写 allowlist 纯文本字段；不要加入账号、session、proxy、设备 ID、窗口位置、下载路径、recent emoji、token 或原始 `tdata` blob。
+- 支持字段以 `TelegramSettings.ps1` 的 `FieldSpecs` 为准；新增字段前先确认它不是凭据、本地路径或行为历史。

@@ -31,7 +31,7 @@ $config = @{
 }
 
 if (Test-Path -LiteralPath $configPath) {
-    $loadedConfig = Import-PowerShellDataFile -LiteralPath $configPath
+    $loadedConfig = InitWin-ImportPowerShellDataFile -Path $configPath
     $knownConfigKeys = @('Profile', 'IgnoredEntries')
     foreach ($key in $loadedConfig.Keys) {
         if ($key -notin $knownConfigKeys) {

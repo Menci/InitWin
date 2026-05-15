@@ -23,6 +23,21 @@ function InitWin-TestFileContentEqual {
     $true
 }
 
+function InitWin-ImportPowerShellDataFile {
+    param([Parameter(Mandatory)][string] $Path)
+
+    if (Get-Command -Name Import-PowerShellDataFile -ErrorAction SilentlyContinue) {
+        return Import-PowerShellDataFile -LiteralPath $Path
+    }
+
+    $data = $null
+    Import-LocalizedData `
+        -BaseDirectory (Split-Path -Parent $Path) `
+        -FileName (Split-Path -Leaf $Path) `
+        -BindingVariable data
+    $data
+}
+
 function InitWin-CopyFile {
     param(
         [Parameter(Mandatory)][string] $Source,
