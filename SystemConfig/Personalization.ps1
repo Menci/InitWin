@@ -66,46 +66,41 @@ $lockScreenProperties = @(
 $visualEffectProperties = @(
     InitWin-NewRegistryProperty -Path 'HKCU:\Control Panel\Desktop' -Name 'UserPreferencesMask' -Type Binary -Value ([byte[]](0x90,0x12,0x07,0x80,0x10,0x00,0x00,0x00))
     InitWin-NewRegistryProperty -Path 'HKCU:\Control Panel\Desktop\WindowMetrics' -Name 'MinAnimate' -Type String -Value '0'
-    InitWin-NewRegistryProperty -Path $advanced -Name 'ListviewAlphaSelect' -Type DWord -Value 0
+    InitWin-NewRegistryProperty -Path $advanced -Name 'ListviewAlphaSelect' -Type DWord -Value 1
     InitWin-NewRegistryProperty -Path $advanced -Name 'ListviewShadow' -Type DWord -Value 0
     InitWin-NewRegistryProperty -Path $visualEffects -Name 'VisualFXSetting' -Type DWord -Value 3
 )
 
-InitWin-DefineEntry -Id System.Personalization.Taskbar -Validate {
+InitWin-DefineEntry -Id System.Personalization.Taskbar -Name '任务栏' -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $taskbarProperties
 } -Apply {
-    InitWin-WriteStep '任务栏'
     InitWin-SetRegistryProperties -Properties $taskbarProperties
 }
 
-InitWin-DefineEntry -Id System.Personalization.ColorTheme -Validate {
+InitWin-DefineEntry -Id System.Personalization.ColorTheme -Name '颜色 / accent / 透明' -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $colorThemeProperties
 } -Apply {
-    InitWin-WriteStep '颜色 / accent / 透明'
     # Orchid Light 来源：https://jmacthefatcat.github.io/win-10-colours/
     # Accent 编码参考：https://github.com/Valer100/winaccent
     InitWin-SetRegistryProperties -Properties $colorThemeProperties
 }
 
-InitWin-DefineEntry -Id System.Personalization.DesktopIcons -Validate {
+InitWin-DefineEntry -Id System.Personalization.DesktopIcons -Name '桌面图标' -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $desktopIconProperties
 } -Apply {
-    InitWin-WriteStep '桌面图标'
     InitWin-SetRegistryProperties -Properties $desktopIconProperties
 }
 
-InitWin-DefineEntry -Id System.Personalization.LockScreen -Validate {
+InitWin-DefineEntry -Id System.Personalization.LockScreen -Name '锁屏' -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $lockScreenProperties
 } -Apply {
-    InitWin-WriteStep '锁屏'
     # LockScreenWidgetsEnabled 参考：https://woshub.com/lock-screen-widgets-windows/
     InitWin-SetRegistryProperties -Properties $lockScreenProperties
 }
 
-InitWin-DefineEntry -Id System.Personalization.VisualEffects -Validate {
+InitWin-DefineEntry -Id System.Personalization.VisualEffects -Name 'Visual effects' -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $visualEffectProperties
 } -Apply {
-    InitWin-WriteStep 'Visual effects'
     InitWin-SetRegistryProperties -Properties $visualEffectProperties
 
     $systemParametersInfoDefinition = @(
