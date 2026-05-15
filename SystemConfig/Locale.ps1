@@ -18,22 +18,24 @@ $unicodeLocaleProperties = @(
     InitWin-NewRegistryProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Nls\CodePage' -Name 'MACCP' -Type String -Value '65001'
 )
 
-InitWin-DefineEntry -Id System.Locale.DateTime -Validate {
+InitWin-DefineEntry -Id System.Locale.DateTime -Name '日期 / 时区' -Validate {
+    $results = [System.Collections.Generic.List[object]]::new()
     if ((Get-TimeZone).Id -ne 'China Standard Time') {
-        return InitWin-NewValidationResult -Status Unset -Target 'time zone' -Current (Get-TimeZone).Id -Expected 'China Standard Time'
+        $results.Add((InitWin-NewValidationResult -Status Unset -Target 'time zone' -Current (Get-TimeZone).Id -Expected 'China Standard Time'))
     }
 
-    $registryResult = InitWin-TestRegistryPropertiesDesired -Properties $dateTimeProperties
-    if ($registryResult.Status -ne 'Desired') { return $registryResult }
+    foreach ($registryResult in @(InitWin-TestRegistryPropertiesDesired -Properties $dateTimeProperties)) {
+        if ($registryResult.Status -ne 'Desired') { $results.Add($registryResult) }
+    }
 
     $timeService = Get-Service -Name w32time
     if ($timeService.StartType -ne 'Automatic') {
-        return InitWin-NewValidationResult -Status Unset -Target 'service: w32time StartType' -Current $timeService.StartType -Expected 'Automatic'
+        $results.Add((InitWin-NewValidationResult -Status Unset -Target 'service: w32time StartType' -Current $timeService.StartType -Expected 'Automatic'))
     }
 
+    if ($results.Count -gt 0) { return $results }
     InitWin-NewValidationResult -Status Desired
 } -Apply {
-    InitWin-WriteStep '日期 / 时区'
     Set-TimeZone -Id 'China Standard Time'
     InitWin-SetRegistryProperties -Properties $dateTimeProperties
     Set-Service -Name w32time -StartupType Automatic
@@ -41,21 +43,25 @@ InitWin-DefineEntry -Id System.Locale.DateTime -Validate {
     InitWin-InvokeNative -FilePath w32tm -Arguments @('/resync', '/force')
 }
 
-InitWin-DefineEntry -Id System.Locale.RegionalFormat -Validate {
+InitWin-DefineEntry -Id System.Locale.RegionalFormat -Name '区域格式' -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $regionalFormatProperties
 } -Apply {
-    InitWin-WriteStep '区域格式'
     InitWin-SetRegistryProperties -Properties $regionalFormatProperties
 }
 
-InitWin-DefineEntry -Id System.Locale.Unicode -Validate {
+InitWin-DefineEntry -Id System.Locale.Unicode -Name 'Non-Unicode locale / UTF-8 / 复制到欢迎屏 & 新用户' -Validate {
+    $results = [System.Collections.Generic.List[object]]::new()
     if ((Get-WinSystemLocale).Name -ne 'zh-CN') {
-        return InitWin-NewValidationResult -Status Unset -Target 'WinSystemLocale' -Current (Get-WinSystemLocale).Name -Expected 'zh-CN'
+        $results.Add((InitWin-NewValidationResult -Status Unset -Target 'WinSystemLocale' -Current (Get-WinSystemLocale).Name -Expected 'zh-CN'))
     }
 
-    InitWin-TestRegistryPropertiesDesired -Properties $unicodeLocaleProperties
+    foreach ($registryResult in @(InitWin-TestRegistryPropertiesDesired -Properties $unicodeLocaleProperties)) {
+        if ($registryResult.Status -ne 'Desired') { $results.Add($registryResult) }
+    }
+
+    if ($results.Count -gt 0) { return $results }
+    InitWin-NewValidationResult -Status Desired
 } -Apply {
-    InitWin-WriteStep 'Non-Unicode locale / UTF-8 / 复制到欢迎屏 & 新用户'
     Set-WinSystemLocale -SystemLocale 'zh-CN'
     InitWin-SetRegistryProperties -Properties $unicodeLocaleProperties
 

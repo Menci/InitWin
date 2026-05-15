@@ -7,19 +7,21 @@ $remoteDesktopProperties = @(
     InitWin-NewRegistryProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'bEnumerateHWBeforeSW' -Type DWord -Value 1
 )
 
-InitWin-DefineEntry -Id System.RemoteAccess.RemoteDesktop -Validate {
-    $registryResult = InitWin-TestRegistryPropertiesDesired -Properties $remoteDesktopProperties
-    if ($registryResult.Status -ne 'Desired') { return $registryResult }
+InitWin-DefineEntry -Id System.RemoteAccess.RemoteDesktop -Name '远程桌面' -Validate {
+    $results = [System.Collections.Generic.List[object]]::new()
+    foreach ($registryResult in @(InitWin-TestRegistryPropertiesDesired -Properties $remoteDesktopProperties)) {
+        if ($registryResult.Status -ne 'Desired') { $results.Add($registryResult) }
+    }
 
     $firewallRules = Get-NetFirewallRule -DisplayGroup 'Remote Desktop' -ErrorAction SilentlyContinue |
         Where-Object { $_.Enabled -eq 'True' }
     if (-not $firewallRules) {
-        return InitWin-NewValidationResult -Status Unset -Target 'firewall group: Remote Desktop' -Current 'disabled' -Expected 'enabled'
+        $results.Add((InitWin-NewValidationResult -Status Unset -Target 'firewall group: Remote Desktop' -Current 'disabled' -Expected 'enabled'))
     }
 
+    if ($results.Count -gt 0) { return $results }
     InitWin-NewValidationResult -Status Desired
 } -Apply {
-    InitWin-WriteStep '远程桌面'
     InitWin-SetRegistryProperties -Properties $remoteDesktopProperties
     Enable-NetFirewallRule -DisplayGroup 'Remote Desktop' -ErrorAction SilentlyContinue
 }

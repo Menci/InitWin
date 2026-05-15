@@ -2,21 +2,23 @@ $networkProfileProperties = @(
     InitWin-NewRegistryProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\NetworkList\NetworkCategorization\UnidentifiedNetworks' -Name 'Category' -Type DWord -Value 1
 )
 
-InitWin-DefineEntry -Id System.Network.Profile -Validate {
-    $registryResult = InitWin-TestRegistryPropertiesDesired -Properties $networkProfileProperties
-    if ($registryResult.Status -ne 'Desired') { return $registryResult }
+InitWin-DefineEntry -Id System.Network.Profile -Name '网络' -Validate {
+    $results = [System.Collections.Generic.List[object]]::new()
+    foreach ($registryResult in @(InitWin-TestRegistryPropertiesDesired -Properties $networkProfileProperties)) {
+        if ($registryResult.Status -ne 'Desired') { $results.Add($registryResult) }
+    }
 
     $publicProfiles = Get-NetConnectionProfile | Where-Object { $_.NetworkCategory -ne 'Private' }
     if ($publicProfiles) {
-        return InitWin-NewValidationResult -Status Unset -Target 'network profiles' -Current 'non-private profile exists' -Expected 'all current profiles private'
+        $results.Add((InitWin-NewValidationResult -Status Unset -Target 'network profiles' -Current 'non-private profile exists' -Expected 'all current profiles private'))
     }
     if (-not (Test-Path -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\Network\NewNetworkWindowOff')) {
-        return InitWin-NewValidationResult -Status Unset -Target 'registry key: HKLM:\SYSTEM\CurrentControlSet\Control\Network\NewNetworkWindowOff' -Current '<missing>' -Expected 'present'
+        $results.Add((InitWin-NewValidationResult -Status Unset -Target 'registry key: HKLM:\SYSTEM\CurrentControlSet\Control\Network\NewNetworkWindowOff' -Current '<missing>' -Expected 'present'))
     }
 
+    if ($results.Count -gt 0) { return $results }
     InitWin-NewValidationResult -Status Desired
 } -Apply {
-    InitWin-WriteStep '网络'
     Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private
     InitWin-SetRegistryProperties -Properties $networkProfileProperties
 
@@ -25,7 +27,7 @@ InitWin-DefineEntry -Id System.Network.Profile -Validate {
     if (-not (Test-Path -LiteralPath $newNetworkWindow)) { New-Item -Path $newNetworkWindow -Force | Out-Null }
 }
 
-InitWin-DefineEntry -Id System.Network.FirewallRules -Validate {
+InitWin-DefineEntry -Id System.Network.FirewallRules -Name '防火墙' -Validate {
     $rules = Get-NetFirewallRule -DisplayName 'Allow ALL' -ErrorAction SilentlyContinue |
         Where-Object { ($_.Enabled -eq 'True') -and ($_.Direction -eq 'Inbound') -and ($_.Action -eq 'Allow') }
     foreach ($rule in $rules) {
@@ -35,7 +37,6 @@ InitWin-DefineEntry -Id System.Network.FirewallRules -Validate {
 
     InitWin-NewValidationResult -Status Unset -Target 'firewall rule: Allow ALL inbound' -Current '<missing>' -Expected 'enabled allow any protocol'
 } -Apply {
-    InitWin-WriteStep '防火墙'
     Get-NetFirewallRule -DisplayName 'Allow ALL' -ErrorAction SilentlyContinue | Remove-NetFirewallRule
     New-NetFirewallRule `
         -DisplayName 'Allow ALL' `

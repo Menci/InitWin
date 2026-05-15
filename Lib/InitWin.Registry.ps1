@@ -61,35 +61,39 @@ function InitWin-FormatValidationValue {
 function InitWin-TestRegistryPropertiesDesired {
     param([Parameter(Mandatory)][object[]] $Properties)
 
+    $results = [System.Collections.Generic.List[object]]::new()
     foreach ($property in $Properties) {
         $target = "$($property.Path)\$($property.Name)"
         if (-not (Test-Path -LiteralPath $property.Path)) {
-            return InitWin-NewValidationResult `
+            $results.Add((InitWin-NewValidationResult `
                 -Status Unset `
                 -Target "registry: $target" `
                 -Current '<missing path>' `
-                -Expected (InitWin-FormatValidationValue $property.Value)
+                -Expected (InitWin-FormatValidationValue $property.Value)))
+            continue
         }
 
         $item = Get-ItemProperty -LiteralPath $property.Path -ErrorAction Stop
         if ($item.PSObject.Properties.Name -notcontains $property.Name) {
-            return InitWin-NewValidationResult `
+            $results.Add((InitWin-NewValidationResult `
                 -Status Unset `
                 -Target "registry: $target" `
                 -Current '<missing>' `
-                -Expected (InitWin-FormatValidationValue $property.Value)
+                -Expected (InitWin-FormatValidationValue $property.Value)))
+            continue
         }
 
         $current = $item.PSObject.Properties[$property.Name].Value
         if (-not (InitWin-TestValueEqual -Current $current -Expected $property.Value -Type $property.Type)) {
-            return InitWin-NewValidationResult `
+            $results.Add((InitWin-NewValidationResult `
                 -Status Unset `
                 -Target "registry: $target" `
                 -Current (InitWin-FormatValidationValue $current) `
-                -Expected (InitWin-FormatValidationValue $property.Value)
+                -Expected (InitWin-FormatValidationValue $property.Value)))
         }
     }
 
+    if ($results.Count -gt 0) { return $results }
     InitWin-NewValidationResult -Status Desired
 }
 
