@@ -76,8 +76,6 @@ $defineMicrosoftStorePackage = {
 & $defineMicrosoftStorePackage -EntryName PowerToys -Name 'PowerToys' -Id 'XP89DCGQ3K6VLD' `
     -WingetPackageIds @('Microsoft.PowerToys') `
     -UninstallDisplayNamePatterns @('PowerToys*')
-& $defineMicrosoftStorePackage -EntryName Python313 -Name 'Python 3.13' -Id '9PNRBTZXMB4Z' `
-    -AppxPackageNames @('PythonSoftwareFoundation.Python.3.13')
 & $defineMicrosoftStorePackage -EntryName TwinkleTray -Name 'Twinkle Tray' -Id '9PLJWWSV01LK' `
     -AppxPackageNames @('38002AlexanderFrangos.TwinkleTray') `
     -WingetPackageIds @('xanderfrangos.twinkletray') `

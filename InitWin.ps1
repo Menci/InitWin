@@ -127,13 +127,13 @@ InitWin-InvokeEntries -Profile $effectiveProfile -DryRun:$DryRun -Ids @(
     'Packages.MicrosoftStore.Mitmproxy'
     'Packages.MicrosoftStore.Snipaste'
     'Packages.MicrosoftStore.PowerToys'
-    'Packages.MicrosoftStore.Python313'
     'Packages.MicrosoftStore.TwinkleTray'
 )
 
 InitWin-WritePhase 'WinGet packages'
 InitWin-InvokeEntries -Profile $effectiveProfile -DryRun:$DryRun -Ids @(
     'Packages.WinGet.PowerShell'
+    'Packages.WinGet.Python314'
     'Packages.WinGet.VisualStudioCode'
     'Packages.WinGet.GitForWindows'
     'Packages.WinGet.Bitwarden'

@@ -73,6 +73,8 @@ $defineWinGetPackage = {
 & $defineWinGetPackage -EntryName PowerShell -Name 'PowerShell' -Id 'Microsoft.PowerShell' `
     -CommandNames @('pwsh.exe') `
     -UninstallDisplayNamePatterns @('PowerShell *')
+& $defineWinGetPackage -EntryName Python314 -Name 'Python 3.14' -Id 'Python.Python.3.14' `
+    -UninstallDisplayNamePatterns @('Python 3.14*')
 & $defineWinGetPackage -EntryName VisualStudioCode -Name 'Visual Studio Code' -Id 'Microsoft.VisualStudioCode' `
     -CommandNames @('code.cmd', 'code.exe') `
     -UninstallDisplayNamePatterns @('Microsoft Visual Studio Code*')
