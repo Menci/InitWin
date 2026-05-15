@@ -1,11 +1,10 @@
-InitWin-DefineEntry -Id Packages.Extras.Hevc -Validate {
+InitWin-DefineEntry -Id Packages.Extras.Hevc -Name 'HEVC (free OEM SKU)' -Validate {
     if (Get-AppxPackage -Name 'Microsoft.HEVCVideoExtension*' -ErrorAction SilentlyContinue) {
         return InitWin-NewValidationResult -Status Desired
     }
 
     InitWin-NewValidationResult -Status Unset -Target 'AppxPackage: Microsoft.HEVCVideoExtension' -Current '<missing>' -Expected 'installed'
 } -Apply {
-    InitWin-WriteStep 'HEVC (free OEM SKU)'
     # Free OEM SKU 受设备资格限制；非 OEM 设备上 winget 通常会被 Store 后端拒绝。
     # 调研依据：https://github.com/microsoft/winget-cli/issues/908
     # 调研依据：https://github.com/ngkoi/hevc-extension
