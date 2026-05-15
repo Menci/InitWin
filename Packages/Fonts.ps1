@@ -1,13 +1,21 @@
-InitWin-DefineEntry -Id Packages.Fonts.MapleMono -Validate {
-    $mapleReg = 'HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts'
-    $mapleAlreadyInstalled = Get-ItemProperty -Path $mapleReg -ErrorAction SilentlyContinue |
-        ForEach-Object { $_.PSObject.Properties.Name } |
-        Where-Object { $_ -like 'MapleMono-NF-CN*' }
+InitWin-DefineEntry -Id Packages.Fonts.MapleMono -Name 'Maple Mono NF CN 字体' -Validate {
+    $mapleRegistryPaths = @(
+        'HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts'
+        'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts'
+    )
+    $mapleAlreadyInstalled = foreach ($mapleReg in $mapleRegistryPaths) {
+        Get-ItemProperty -Path $mapleReg -ErrorAction SilentlyContinue |
+            ForEach-Object { $_.PSObject.Properties } |
+            Where-Object {
+                ($_.Name -like 'Maple Mono NF CN*') -or
+                ($_.Name -like 'MapleMono-NF-CN*') -or
+                ([IO.Path]::GetFileName([string] $_.Value) -like 'MapleMono-NF-CN*')
+            }
+    }
 
     if ($mapleAlreadyInstalled) { return InitWin-NewValidationResult -Status Desired }
     InitWin-NewValidationResult -Status Unset -Target 'font: Maple Mono NF CN' -Current '<missing>' -Expected 'installed'
 } -Apply {
-    InitWin-WriteStep 'Maple Mono NF CN 字体'
     # 来源：https://github.com/subframe7536/maple-font
     $mapleZip = Join-Path $env:TEMP 'MapleMono-NF-CN.zip'
     $mapleDst = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts'
