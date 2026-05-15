@@ -121,8 +121,8 @@ function InitWin-InvokeEntry {
         return
     }
 
-    if ($entry.Profile -and ($entry.Profile -ne $Profile)) {
-        InitWin-WriteEntry -Id $entry.Id -State "skip profile=$($entry.Profile)"
+    if (-not (InitWin-TestEntryProfileMatch -Entry $entry -Profile $Profile)) {
+        InitWin-WriteEntry -Id $entry.Id -State "skip profile=$Profile"
         return
     }
 

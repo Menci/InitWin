@@ -1,4 +1,4 @@
-InitWin-DefineEntry -Id Packages.Extras.Hevc -Name 'HEVC (free OEM SKU)' -Validate {
+InitWin-DefineEntry -Id Packages.Extras.Hevc -Name 'HEVC (free OEM SKU)' -Profiles @() -Validate {
     if (Get-AppxPackage -Name 'Microsoft.HEVCVideoExtension*' -ErrorAction SilentlyContinue) {
         return InitWin-NewValidationResult -Status Desired
     }

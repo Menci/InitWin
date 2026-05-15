@@ -1,4 +1,4 @@
-InitWin-DefineEntry -Id Packages.Fonts.MapleMono -Name 'Maple Mono NF CN 字体' -Validate {
+InitWin-DefineEntry -Id Packages.Fonts.MapleMono -Name 'Maple Mono NF CN 字体' -Profiles @() -Validate {
     $mapleRegistryPaths = @(
         'HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts'
         'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts'

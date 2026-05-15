@@ -4,7 +4,7 @@ $developerProperties = @(
     InitWin-NewRegistryProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Sudo' -Name 'Enabled' -Type DWord -Value 3
 )
 
-InitWin-DefineEntry -Id System.Developer.TerminalAndSudo -Name '终端 / sudo' -Validate {
+InitWin-DefineEntry -Id System.Developer.TerminalAndSudo -Name '终端 / sudo' -Profiles @() -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $developerProperties
 } -Apply {
     InitWin-SetRegistryProperties -Properties $developerProperties

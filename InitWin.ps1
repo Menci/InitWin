@@ -49,11 +49,31 @@ if (Test-Path -LiteralPath $configPath) {
 if ($PSBoundParameters.ContainsKey('Profile')) {
     $config.Profile = $Profile
 }
-if (($null -ne $config.Profile) -and ($config.Profile -notin @('Work', 'Personal'))) {
-    throw "Profile must be Work or Personal: $($config.Profile)"
-}
 if ($null -eq $config.IgnoredEntries) {
     $config.IgnoredEntries = @()
+}
+if ($null -ne $config.Profile) {
+    $config.Profile = [string] $config.Profile
+    if ([string]::IsNullOrWhiteSpace($config.Profile)) {
+        $config.Profile = $null
+    } else {
+        InitWin-AssertProfileName -Profile $config.Profile -Context 'Profile'
+    }
+}
+if ($null -eq $config.Profile) {
+    $knownProfiles = InitWin-GetKnownProfiles
+    do {
+        Write-Host "Select InitWin profile: $($knownProfiles -join ', ')"
+        $profileInput = Read-Host 'Profile'
+        $config.Profile = if ($null -eq $profileInput) { '' } else { $profileInput.Trim() }
+        if ($config.Profile -cnotin $knownProfiles) {
+            Write-Host "Invalid profile: $($config.Profile)" -ForegroundColor Yellow
+            $config.Profile = $null
+        }
+    } while ($null -eq $config.Profile)
+
+    InitWin-WriteConfigFile -Path $configPath -Profile $config.Profile -IgnoredEntries ([string[]] $config.IgnoredEntries)
+    Write-Host "Saved profile to $configPath"
 }
 
 $entryScripts = @()
@@ -108,7 +128,9 @@ InitWin-InvokeEntries -Profile $effectiveProfile -DryRun:$DryRun -Ids @(
     'System.Locale.DateTime'
     'System.Locale.RegionalFormat'
     'System.Locale.Unicode'
+    'System.Features.WindowsCapabilities.Basic'
     'System.Features.WindowsCapabilities'
+    'System.Features.WindowsOptionalFeatures.Basic'
     'System.Features.WindowsOptionalFeatures'
     'System.Security.UacPolicy'
     'System.Security.Ucpd'
@@ -123,19 +145,19 @@ InitWin-InvokeEntries -Profile $effectiveProfile -DryRun:$DryRun -Ids @(
     'Packages.MicrosoftStore.Gimp'
     'Packages.MicrosoftStore.Inkscape'
     'Packages.MicrosoftStore.TelegramDesktop'
-    'Packages.MicrosoftStore.NanaZip'
+    'Packages.MicrosoftStore.Basic.NanaZip'
     'Packages.MicrosoftStore.Mitmproxy'
-    'Packages.MicrosoftStore.Snipaste'
+    'Packages.MicrosoftStore.Basic.Snipaste'
     'Packages.MicrosoftStore.PowerToys'
     'Packages.MicrosoftStore.TwinkleTray'
 )
 
 InitWin-WritePhase 'WinGet packages'
 InitWin-InvokeEntries -Profile $effectiveProfile -DryRun:$DryRun -Ids @(
-    'Packages.WinGet.PowerShell'
-    'Packages.WinGet.Python314'
+    'Packages.WinGet.Basic.PowerShell'
+    'Packages.WinGet.Basic.Python314'
     'Packages.WinGet.VisualStudioCode'
-    'Packages.WinGet.GitForWindows'
+    'Packages.WinGet.Basic.GitForWindows'
     'Packages.WinGet.Bitwarden'
     'Packages.WinGet.Office365Apps'
     'Packages.WinGet.DotNetSdk'

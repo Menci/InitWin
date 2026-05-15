@@ -4,6 +4,7 @@ $script:InitWinIgnoredEntries = [System.Collections.Generic.HashSet[string]]::ne
 $script:InitWinIgnoredEntryPatterns = [System.Collections.Generic.List[string]]::new()
 $script:InitWinEntryIdPattern = '^(System|App|Packages)\.[A-Z][A-Za-z0-9]*\.[A-Z][A-Za-z0-9]*(\.[A-Z][A-Za-z0-9]*)*$'
 $script:InitWinEntryIdGlobPattern = '^(System|App|Packages)(\.([A-Z][A-Za-z0-9]*|\*))*$'
+$script:InitWinKnownProfiles = @('Work', 'Personal', 'Basic')
 $script:InitWinWingetInstalledPackageIdsBySource = $null
 $script:InitWinUninstallDisplayNames = $null
 
@@ -39,13 +40,84 @@ function InitWin-NewValidationResult {
     }
 }
 
+function InitWin-GetKnownProfiles {
+    [string[]] $script:InitWinKnownProfiles
+}
+
+function InitWin-AssertProfileName {
+    param(
+        [AllowNull()][string] $Profile,
+        [Parameter(Mandatory)][string] $Context
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Profile)) {
+        throw "$Context must be one of: $($script:InitWinKnownProfiles -join ', ')"
+    }
+    if ($Profile -cnotin $script:InitWinKnownProfiles) {
+        throw "$Context must be one of $($script:InitWinKnownProfiles -join ', '): $Profile"
+    }
+}
+
+function InitWin-NormalizeEntryProfiles {
+    param([AllowNull()][string[]] $Profiles = @())
+
+    $normalized = [System.Collections.Generic.List[string]]::new()
+    $seen = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $hasPositive = $false
+    $hasNegative = $false
+
+    foreach ($profileExpression in @($Profiles)) {
+        if ([string]::IsNullOrWhiteSpace($profileExpression)) {
+            throw 'Entry profile expression cannot be empty.'
+        }
+
+        $profileExpression = $profileExpression.Trim()
+        $isNegative = $profileExpression.StartsWith('!')
+        $profileName = if ($isNegative) { $profileExpression.Substring(1) } else { $profileExpression }
+        InitWin-AssertProfileName -Profile $profileName -Context 'Entry profile expression'
+
+        if ($isNegative) { $hasNegative = $true } else { $hasPositive = $true }
+        if ($hasPositive -and $hasNegative) {
+            throw 'Entry profile list cannot mix positive and negative profile expressions.'
+        }
+        if (-not $seen.Add($profileExpression)) {
+            throw "Duplicate entry profile expression: $profileExpression"
+        }
+        $normalized.Add($profileExpression)
+    }
+
+    [string[]] $normalized
+}
+
+function InitWin-TestEntryProfileMatch {
+    param(
+        [Parameter(Mandatory)][object] $Entry,
+        [AllowNull()][string] $Profile
+    )
+
+    $profiles = @($Entry.Profiles)
+    if ($profiles.Count -eq 0) { return $true }
+    InitWin-AssertProfileName -Profile $Profile -Context 'Active profile'
+
+    $isNegativeList = $profiles[0].StartsWith('!')
+    foreach ($profileExpression in $profiles) {
+        $profileName = if ($profileExpression.StartsWith('!')) { $profileExpression.Substring(1) } else { $profileExpression }
+        if ($Profile -ceq $profileName) {
+            return (-not $isNegativeList)
+        }
+    }
+
+    $isNegativeList
+}
+
 function InitWin-DefineEntry {
     param(
         [Parameter(Mandatory)]
         [string] $Id,
         [string] $Name = $null,
         [AllowNull()]
-        [string] $Profile = $null,
+        [Alias('Profile')]
+        [string[]] $Profiles = @(),
         [scriptblock] $Validate = $null,
         [Parameter(Mandatory)]
         [scriptblock] $Apply
@@ -58,10 +130,12 @@ function InitWin-DefineEntry {
         throw "Duplicate entry id: $Id"
     }
 
+    $normalizedProfiles = InitWin-NormalizeEntryProfiles -Profiles $Profiles
+
     $script:InitWinEntries[$Id] = [pscustomobject]@{
         Id = $Id
         Name = $Name
-        Profile = $Profile
+        Profiles = [string[]] @($normalizedProfiles)
         Validate = $Validate
         Apply = $Apply
     }

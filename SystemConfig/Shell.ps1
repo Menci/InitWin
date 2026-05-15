@@ -14,13 +14,13 @@ $explorerProperties = @(
     InitWin-NewRegistryProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -Type DWord -Value 1
 )
 
-InitWin-DefineEntry -Id System.Shell.Multitasking -Name '多任务 / Alt+Tab / Aero Shake' -Validate {
+InitWin-DefineEntry -Id System.Shell.Multitasking -Name '多任务 / Alt+Tab / Aero Shake' -Profiles @() -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $multitaskingProperties
 } -Apply {
     InitWin-SetRegistryProperties -Properties $multitaskingProperties
 }
 
-InitWin-DefineEntry -Id System.Shell.Explorer -Name '高级 / 任务栏 / 文件管理器' -Validate {
+InitWin-DefineEntry -Id System.Shell.Explorer -Name '高级 / 任务栏 / 文件管理器' -Profiles @() -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $explorerProperties
 } -Apply {
     InitWin-SetRegistryProperties -Properties $explorerProperties

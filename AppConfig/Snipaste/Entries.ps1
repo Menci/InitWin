@@ -2,7 +2,7 @@ $snipasteSource = Join-Path $PSScriptRoot 'config.ini'
 $snipastePackageFamily = '45479liulios.17062D84F7C46_p7pnf6hceqser'
 $snipasteDestination = Join-Path $env:LOCALAPPDATA "Packages\$snipastePackageFamily\LocalState\config.ini"
 
-InitWin-DefineEntry -Id App.Snipaste.Config -Validate {
+InitWin-DefineEntry -Id App.Snipaste.Config -Profiles @() -Validate {
     InitWin-TestIniEntriesDesired -Source $snipasteSource -Destination $snipasteDestination
 } -Apply {
     Get-Process -Name 'Snipaste' -ErrorAction SilentlyContinue | Stop-Process -Force

@@ -2,7 +2,7 @@ $networkProfileProperties = @(
     InitWin-NewRegistryProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\NetworkList\NetworkCategorization\UnidentifiedNetworks' -Name 'Category' -Type DWord -Value 1
 )
 
-InitWin-DefineEntry -Id System.Network.Profile -Name '网络' -Validate {
+InitWin-DefineEntry -Id System.Network.Profile -Name '网络' -Profiles @() -Validate {
     $results = [System.Collections.Generic.List[object]]::new()
     foreach ($registryResult in @(InitWin-TestRegistryPropertiesDesired -Properties $networkProfileProperties)) {
         if ($registryResult.Status -ne 'Desired') { $results.Add($registryResult) }
@@ -34,7 +34,7 @@ InitWin-DefineEntry -Id System.Network.Profile -Name '网络' -Validate {
     if (-not (Test-Path -LiteralPath $newNetworkWindow)) { New-Item -Path $newNetworkWindow -Force | Out-Null }
 }
 
-InitWin-DefineEntry -Id System.Network.FirewallRules -Name '防火墙' -Validate {
+InitWin-DefineEntry -Id System.Network.FirewallRules -Name '防火墙' -Profiles @() -Validate {
     $rules = Get-NetFirewallRule -DisplayName 'Allow ALL' -ErrorAction SilentlyContinue |
         Where-Object { ($_.Enabled -eq 'True') -and ($_.Direction -eq 'Inbound') -and ($_.Action -eq 'Allow') }
     foreach ($rule in $rules) {

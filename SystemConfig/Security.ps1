@@ -13,7 +13,7 @@ $windowsPowerShellExecutionPolicyProperties = @(
     InitWin-NewRegistryProperty -Path 'HKCU:\SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell' -Name 'ExecutionPolicy' -Type String -Value $powerShellExecutionPolicy
 )
 
-InitWin-DefineEntry -Id System.Security.ExecutionPolicy -Validate {
+InitWin-DefineEntry -Id System.Security.ExecutionPolicy -Profiles @() -Validate {
     $results = [System.Collections.Generic.List[object]]::new()
     foreach ($registryResult in @(InitWin-TestRegistryPropertiesDesired -Properties $windowsPowerShellExecutionPolicyProperties)) {
         if ($registryResult.Status -ne 'Desired') { $results.Add($registryResult) }
@@ -31,7 +31,7 @@ InitWin-DefineEntry -Id System.Security.ExecutionPolicy -Validate {
     }
 }
 
-InitWin-DefineEntry -Id System.Security.UacPolicy -Validate {
+InitWin-DefineEntry -Id System.Security.UacPolicy -Profiles @() -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $uacPolicyProperties
 } -Apply {
     # UAC：等价于 "Notify me only when apps try to make changes to my computer (do not dim my desktop)"
@@ -39,7 +39,7 @@ InitWin-DefineEntry -Id System.Security.UacPolicy -Validate {
     InitWin-SetRegistryProperties -Properties $uacPolicyProperties
 }
 
-InitWin-DefineEntry -Id System.Security.Ucpd -Validate {
+InitWin-DefineEntry -Id System.Security.Ucpd -Profiles @() -Validate {
     $driver = Get-CimInstance Win32_SystemDriver -Filter "Name='UCPD'"
     if (-not $driver) {
         return InitWin-NewValidationResult -Status NotApplicable -Reason 'UCPD driver is not installed.'

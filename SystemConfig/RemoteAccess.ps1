@@ -7,7 +7,7 @@ $remoteDesktopProperties = @(
     InitWin-NewRegistryProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'bEnumerateHWBeforeSW' -Type DWord -Value 1
 )
 
-InitWin-DefineEntry -Id System.RemoteAccess.RemoteDesktop -Name '远程桌面' -Validate {
+InitWin-DefineEntry -Id System.RemoteAccess.RemoteDesktop -Name '远程桌面' -Profiles @() -Validate {
     $results = [System.Collections.Generic.List[object]]::new()
     foreach ($registryResult in @(InitWin-TestRegistryPropertiesDesired -Properties $remoteDesktopProperties)) {
         if ($registryResult.Status -ne 'Desired') { $results.Add($registryResult) }

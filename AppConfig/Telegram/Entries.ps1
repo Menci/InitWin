@@ -8,7 +8,7 @@ $telegramStartupKey = "HKCU:\Software\Classes\Local Settings\Software\Microsoft\
 
 . (Join-Path $PSScriptRoot 'TelegramSettings.ps1')
 
-InitWin-DefineEntry -Id App.Telegram.Config -Validate {
+InitWin-DefineEntry -Id App.Telegram.Config -Profiles @() -Validate {
     $results = [System.Collections.Generic.List[object]]::new()
     $fileResult = InitWin-TestSingleFileDesired -Source $telegramSource -Destination $telegramDestination
     if ($fileResult.Status -ne 'Desired') { $results.Add($fileResult) }

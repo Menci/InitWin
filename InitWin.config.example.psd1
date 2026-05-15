@@ -1,5 +1,5 @@
 @{
-    # Work or Personal.
+    # Work, Personal, or Basic.
     Profile = 'Personal'
 
     IgnoredEntries = @(

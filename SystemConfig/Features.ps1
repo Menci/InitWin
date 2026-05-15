@@ -1,5 +1,8 @@
 $windowsCapabilityNames = @(
     'Language.Fonts.Hans~~~und-HANS~0.0.1.0'
+)
+
+$basicWindowsCapabilityNames = @(
     'OpenSSH.Client~~~~0.0.1.0'
 )
 
@@ -7,14 +10,25 @@ $windowsFeatureNames = @(
     'Microsoft-Hyper-V-All'
     'Microsoft-Windows-Subsystem-Linux'
     'VirtualMachinePlatform'
-    'TelnetClient'
-    'TFTP'
     'Containers-DisposableClientVM'
 )
 
-InitWin-DefineEntry -Id System.Features.WindowsCapabilities -Name 'Optional features (FoD)' -Validate {
-    $capabilityNamesLiteral = InitWin-QuotePowerShellStringArray $windowsCapabilityNames
-    $script = @"
+$basicWindowsFeatureNames = @(
+    'TelnetClient'
+    'TFTP'
+)
+
+$defineWindowsCapabilityEntry = {
+    param(
+        [Parameter(Mandatory)][string] $EntryName,
+        [Parameter(Mandatory)][string] $Name,
+        [Parameter(Mandatory)][string[]] $CapabilityNames,
+        [string[]] $Profiles = @()
+    )
+
+    $capabilityNamesLiteral = InitWin-QuotePowerShellStringArray $CapabilityNames
+    $validateScript = @"
+`$ErrorActionPreference = 'Stop'
 `$results = foreach (`$capability in $capabilityNamesLiteral) {
     `$state = Get-WindowsCapability -Online -Name `$capability -ErrorAction SilentlyContinue
     [pscustomobject]@{
@@ -24,19 +38,9 @@ InitWin-DefineEntry -Id System.Features.WindowsCapabilities -Name 'Optional feat
 }
 `$results | ConvertTo-Json -Depth 4
 "@
-    $states = @(InitWin-InvokeWindowsPowerShellJson -Script $script)
-    $results = [System.Collections.Generic.List[object]]::new()
-    foreach ($state in $states) {
-        if ($state.State -ne 'Installed') {
-            $results.Add((InitWin-NewValidationResult -Status Unset -Target "Windows capability: $($state.Name)" -Current $state.State -Expected 'Installed'))
-        }
-    }
 
-    if ($results.Count -gt 0) { return $results }
-    InitWin-NewValidationResult -Status Desired
-} -Apply {
-    $capabilityNamesLiteral = InitWin-QuotePowerShellStringArray $windowsCapabilityNames
-    $script = @"
+    $applyScript = @"
+`$ErrorActionPreference = 'Stop'
 foreach (`$capability in $capabilityNamesLiteral) {
     `$state = Get-WindowsCapability -Online -Name `$capability -ErrorAction SilentlyContinue
     if (`$null -eq `$state) {
@@ -49,14 +53,43 @@ foreach (`$capability in $capabilityNamesLiteral) {
     }
 }
 "@
-    foreach ($line in @(InitWin-InvokeWindowsPowerShell -Script $script -CaptureOutput)) {
-        InitWin-WriteDetail ([string] $line)
+
+    $validateScriptLiteral = InitWin-QuotePowerShellString $validateScript
+    $applyScriptLiteral = InitWin-QuotePowerShellString $applyScript
+    $entryValidate = [scriptblock]::Create(@"
+`$ErrorActionPreference = 'Stop'
+`$states = @(InitWin-InvokeWindowsPowerShellJson -Script $validateScriptLiteral)
+`$results = [System.Collections.Generic.List[object]]::new()
+foreach (`$state in `$states) {
+    if (`$state.State -ne 'Installed') {
+        `$results.Add((InitWin-NewValidationResult -Status Unset -Target "Windows capability: `$(`$state.Name)" -Current `$state.State -Expected 'Installed'))
     }
 }
 
-InitWin-DefineEntry -Id System.Features.WindowsOptionalFeatures -Name 'Windows features' -Validate {
-    $featureNamesLiteral = InitWin-QuotePowerShellStringArray $windowsFeatureNames
-    $script = @"
+if (`$results.Count -gt 0) { return `$results }
+InitWin-NewValidationResult -Status Desired
+"@)
+    $entryApply = [scriptblock]::Create(@"
+`$ErrorActionPreference = 'Stop'
+foreach (`$line in @(InitWin-InvokeWindowsPowerShell -Script $applyScriptLiteral -CaptureOutput)) {
+    InitWin-WriteDetail ([string] `$line)
+}
+"@)
+
+    InitWin-DefineEntry -Id "System.Features.$EntryName" -Name $Name -Profiles $Profiles -Validate $entryValidate -Apply $entryApply
+}
+
+$defineWindowsOptionalFeatureEntry = {
+    param(
+        [Parameter(Mandatory)][string] $EntryName,
+        [Parameter(Mandatory)][string] $Name,
+        [Parameter(Mandatory)][string[]] $FeatureNames,
+        [string[]] $Profiles = @()
+    )
+
+    $featureNamesLiteral = InitWin-QuotePowerShellStringArray $FeatureNames
+    $validateScript = @"
+`$ErrorActionPreference = 'Stop'
 `$results = foreach (`$feature in $featureNamesLiteral) {
     `$state = Get-WindowsOptionalFeature -Online -FeatureName `$feature -ErrorAction SilentlyContinue
     [pscustomobject]@{
@@ -66,19 +99,9 @@ InitWin-DefineEntry -Id System.Features.WindowsOptionalFeatures -Name 'Windows f
 }
 `$results | ConvertTo-Json -Depth 4
 "@
-    $states = @(InitWin-InvokeWindowsPowerShellJson -Script $script)
-    $results = [System.Collections.Generic.List[object]]::new()
-    foreach ($state in $states) {
-        if ($state.State -ne 'Enabled') {
-            $results.Add((InitWin-NewValidationResult -Status Unset -Target "Windows optional feature: $($state.Name)" -Current $state.State -Expected 'Enabled'))
-        }
-    }
 
-    if ($results.Count -gt 0) { return $results }
-    InitWin-NewValidationResult -Status Desired
-} -Apply {
-    $featureNamesLiteral = InitWin-QuotePowerShellStringArray $windowsFeatureNames
-    $script = @"
+    $applyScript = @"
+`$ErrorActionPreference = 'Stop'
 foreach (`$feature in $featureNamesLiteral) {
     `$state = Get-WindowsOptionalFeature -Online -FeatureName `$feature -ErrorAction SilentlyContinue
     if (`$null -eq `$state) {
@@ -91,7 +114,50 @@ foreach (`$feature in $featureNamesLiteral) {
     }
 }
 "@
-    foreach ($line in @(InitWin-InvokeWindowsPowerShell -Script $script -CaptureOutput)) {
-        InitWin-WriteDetail ([string] $line)
+
+    $validateScriptLiteral = InitWin-QuotePowerShellString $validateScript
+    $applyScriptLiteral = InitWin-QuotePowerShellString $applyScript
+    $entryValidate = [scriptblock]::Create(@"
+`$ErrorActionPreference = 'Stop'
+`$states = @(InitWin-InvokeWindowsPowerShellJson -Script $validateScriptLiteral)
+`$results = [System.Collections.Generic.List[object]]::new()
+foreach (`$state in `$states) {
+    if (`$state.State -ne 'Enabled') {
+        `$results.Add((InitWin-NewValidationResult -Status Unset -Target "Windows optional feature: `$(`$state.Name)" -Current `$state.State -Expected 'Enabled'))
     }
 }
+
+if (`$results.Count -gt 0) { return `$results }
+InitWin-NewValidationResult -Status Desired
+"@)
+    $entryApply = [scriptblock]::Create(@"
+`$ErrorActionPreference = 'Stop'
+foreach (`$line in @(InitWin-InvokeWindowsPowerShell -Script $applyScriptLiteral -CaptureOutput)) {
+    InitWin-WriteDetail ([string] `$line)
+}
+"@)
+
+    InitWin-DefineEntry -Id "System.Features.$EntryName" -Name $Name -Profiles $Profiles -Validate $entryValidate -Apply $entryApply
+}
+
+& $defineWindowsCapabilityEntry `
+    -EntryName WindowsCapabilities `
+    -Name 'Optional features (FoD)' `
+    -Profiles @('!Basic') `
+    -CapabilityNames $windowsCapabilityNames
+& $defineWindowsCapabilityEntry `
+    -EntryName WindowsCapabilities.Basic `
+    -Name 'Optional features (FoD) basic' `
+    -Profiles @() `
+    -CapabilityNames $basicWindowsCapabilityNames
+
+& $defineWindowsOptionalFeatureEntry `
+    -EntryName WindowsOptionalFeatures `
+    -Name 'Windows features' `
+    -Profiles @('!Basic') `
+    -FeatureNames $windowsFeatureNames
+& $defineWindowsOptionalFeatureEntry `
+    -EntryName WindowsOptionalFeatures.Basic `
+    -Name 'Windows features basic' `
+    -Profiles @() `
+    -FeatureNames $basicWindowsFeatureNames

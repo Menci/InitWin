@@ -1,7 +1,8 @@
-- package entry id 使用 `Packages.MicrosoftStore.AppName` / `Packages.WinGet.AppName` / `Packages.Fonts.AppName` / `Packages.Extras.AppName`。
+- package entry id 使用 `Packages.MicrosoftStore.AppName` / `Packages.MicrosoftStore.Basic.AppName` / `Packages.WinGet.AppName` / `Packages.WinGet.Basic.AppName` / `Packages.Fonts.AppName` / `Packages.Extras.AppName`。
 - 每个 package 一个 entry；`-Validate` 可以因为“未安装”或“已安装但后置配置未满足”返回 `Unset`。
 - Microsoft Store 和 WinGet 的普通包用本目录脚本里的 helper 定义，不再做聚合安装 entry。
+- Basic 软件包 entry 使用 `.Basic.` namespace 且 `-Profiles @()`；非 Basic 的 Microsoft Store / WinGet entry 使用 `-Profiles @('!Basic')`。
 - 软件包 helper 的 validate 要声明该软件的已知安装身份，包括可用的 Appx package name、winget id、Microsoft Store id、uninstall registry display name pattern、以及不执行程序即可检查的 command name。
 - validate 检测软件是否已通过其他途径安装时不能执行软件本体；可以查 registry、Appx、winget/msstore 已安装清单和命令存在性。
-- `Packages.WinGet.PowerShell` 需要把“PowerShell 已安装但 PowerShell 7+ execution policy 不是 Bypass”也视作需要 apply；安装后同一个 entry 负责补写 PowerShell 7+ CurrentUser 和 LocalMachine config。
+- `Packages.WinGet.Basic.PowerShell` 需要把“PowerShell 已安装但 PowerShell 7+ execution policy 不是 Bypass”也视作需要 apply；安装后同一个 entry 负责补写 PowerShell 7+ CurrentUser 和 LocalMachine config。
 - Store 版 PowerShell 的 LocalMachine config 位于 WindowsApps `$PSHOME` 时，管理员也可能没有写权限；不要改 WindowsApps ACL，使用临时 SYSTEM scheduled task 写入。

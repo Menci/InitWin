@@ -18,7 +18,7 @@ $unicodeLocaleProperties = @(
     InitWin-NewRegistryProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Nls\CodePage' -Name 'MACCP' -Type String -Value '65001'
 )
 
-InitWin-DefineEntry -Id System.Locale.DateTime -Name '日期 / 时区' -Validate {
+InitWin-DefineEntry -Id System.Locale.DateTime -Name '日期 / 时区' -Profiles @() -Validate {
     $results = [System.Collections.Generic.List[object]]::new()
     if ((Get-TimeZone).Id -ne 'China Standard Time') {
         $results.Add((InitWin-NewValidationResult -Status Unset -Target 'time zone' -Current (Get-TimeZone).Id -Expected 'China Standard Time'))
@@ -43,13 +43,13 @@ InitWin-DefineEntry -Id System.Locale.DateTime -Name '日期 / 时区' -Validate
     InitWin-InvokeNative -FilePath w32tm -Arguments @('/resync', '/force')
 }
 
-InitWin-DefineEntry -Id System.Locale.RegionalFormat -Name '区域格式' -Validate {
+InitWin-DefineEntry -Id System.Locale.RegionalFormat -Name '区域格式' -Profiles @() -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $regionalFormatProperties
 } -Apply {
     InitWin-SetRegistryProperties -Properties $regionalFormatProperties
 }
 
-InitWin-DefineEntry -Id System.Locale.Unicode -Name 'Non-Unicode locale / UTF-8 / 复制到欢迎屏 & 新用户' -Validate {
+InitWin-DefineEntry -Id System.Locale.Unicode -Name 'Non-Unicode locale / UTF-8 / 复制到欢迎屏 & 新用户' -Profiles @() -Validate {
     $results = [System.Collections.Generic.List[object]]::new()
     if ((Get-WinSystemLocale).Name -ne 'zh-CN') {
         $results.Add((InitWin-NewValidationResult -Status Unset -Target 'WinSystemLocale' -Current (Get-WinSystemLocale).Name -Expected 'zh-CN'))

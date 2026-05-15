@@ -71,13 +71,13 @@ $visualEffectProperties = @(
     InitWin-NewRegistryProperty -Path $visualEffects -Name 'VisualFXSetting' -Type DWord -Value 3
 )
 
-InitWin-DefineEntry -Id System.Personalization.Taskbar -Name '任务栏' -Validate {
+InitWin-DefineEntry -Id System.Personalization.Taskbar -Name '任务栏' -Profiles @() -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $taskbarProperties
 } -Apply {
     InitWin-SetRegistryProperties -Properties $taskbarProperties
 }
 
-InitWin-DefineEntry -Id System.Personalization.ColorTheme -Name '颜色 / accent / 透明' -Validate {
+InitWin-DefineEntry -Id System.Personalization.ColorTheme -Name '颜色 / accent / 透明' -Profiles @('Work') -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $colorThemeProperties
 } -Apply {
     # Orchid Light 来源：https://jmacthefatcat.github.io/win-10-colours/
@@ -85,20 +85,20 @@ InitWin-DefineEntry -Id System.Personalization.ColorTheme -Name '颜色 / accent
     InitWin-SetRegistryProperties -Properties $colorThemeProperties
 }
 
-InitWin-DefineEntry -Id System.Personalization.DesktopIcons -Name '桌面图标' -Validate {
+InitWin-DefineEntry -Id System.Personalization.DesktopIcons -Name '桌面图标' -Profiles @() -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $desktopIconProperties
 } -Apply {
     InitWin-SetRegistryProperties -Properties $desktopIconProperties
 }
 
-InitWin-DefineEntry -Id System.Personalization.LockScreen -Name '锁屏' -Validate {
+InitWin-DefineEntry -Id System.Personalization.LockScreen -Name '锁屏' -Profiles @() -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $lockScreenProperties
 } -Apply {
     # LockScreenWidgetsEnabled 参考：https://woshub.com/lock-screen-widgets-windows/
     InitWin-SetRegistryProperties -Properties $lockScreenProperties
 }
 
-InitWin-DefineEntry -Id System.Personalization.VisualEffects -Name 'Visual effects' -Validate {
+InitWin-DefineEntry -Id System.Personalization.VisualEffects -Name 'Visual effects' -Profiles @() -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $visualEffectProperties
 } -Apply {
     InitWin-SetRegistryProperties -Properties $visualEffectProperties

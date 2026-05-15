@@ -38,6 +38,28 @@ function InitWin-ImportPowerShellDataFile {
     $data
 }
 
+function InitWin-WriteConfigFile {
+    param(
+        [Parameter(Mandatory)][string] $Path,
+        [Parameter(Mandatory)][string] $Profile,
+        [string[]] $IgnoredEntries = @()
+    )
+
+    $lines = [System.Collections.Generic.List[string]]::new()
+    $lines.Add('@{')
+    $lines.Add("    Profile = $(InitWin-QuotePowerShellString $Profile)")
+    $lines.Add('')
+    $lines.Add('    IgnoredEntries = @(')
+    foreach ($id in @($IgnoredEntries)) {
+        $lines.Add("        $(InitWin-QuotePowerShellString $id)")
+    }
+    $lines.Add('    )')
+    $lines.Add('}')
+
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Path) | Out-Null
+    Set-Content -LiteralPath $Path -Value ([string[]] $lines) -Encoding UTF8
+}
+
 function InitWin-CopyFile {
     param(
         [Parameter(Mandatory)][string] $Source,

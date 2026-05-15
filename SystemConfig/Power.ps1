@@ -5,7 +5,7 @@ $powerTimeoutSettings = @(
     [pscustomobject]@{ SubGroup = 'SUB_SLEEP'; Setting = 'HIBERNATEIDLE'; AcChange = 'hibernate-timeout-ac'; DcChange = 'hibernate-timeout-dc'; AcMinutes = 0; DcMinutes = 0 }
 )
 
-InitWin-DefineEntry -Id System.Power.PowerAndExplorer -Name '电源 / 睡眠 / 屏幕' -Validate {
+InitWin-DefineEntry -Id System.Power.PowerAndExplorer -Name '电源 / 睡眠 / 屏幕' -Profiles @() -Validate {
     $results = [System.Collections.Generic.List[object]]::new()
     foreach ($setting in $powerTimeoutSettings) {
         $result = InitWin-TestPowerSettingValue `

@@ -2,8 +2,10 @@
 - 默认不要 commit；不要把 credentials、登录态、会话数据或不可读 blob 直接放进 git。
 - 项目入口是 `InitWin.ps1`；配置脚本只注册 `InitWin-DefineEntry`，不直接执行；执行顺序只写在 `InitWin.ps1`。
 - 本地配置文件是 `InitWin.config.psd1`，不要提交；提交可参考的 `InitWin.config.example.psd1`。
+- `Profile` 只允许 `Work` / `Personal` / `Basic`；首次运行没有 `Profile` 时入口会 prompt 并写入本地 `InitWin.config.psd1`。
 - `IgnoredEntries` 支持完整 entry id 或整段 `*` 通配，如 `Packages.MicrosoftStore.*`；匹配的 entry 运行时输出 `[ignored]`，不执行 `-Validate` / `-Apply`。
-- entry id 使用 `System.Section.EntryName` / `App.AppName.EntryName` / `Packages.Source.EntryName`；每个 entry 都写 `-Validate`。
+- entry id 使用 `System.Section.EntryName` / `App.AppName.EntryName` / `Packages.Source.EntryName`，允许继续用额外 PascalCase segment 表达分组，如 `Packages.WinGet.Basic.PowerShell`；每个 entry 都写 `-Validate`。
+- `InitWin-DefineEntry -Profiles` 写在 `-Name` 后面；`@()` 表示所有 profile，`@('Work')` 表示仅 Work，`@('!Basic')` 表示除 Basic 外都适用；同一个列表不要混用正向和反向表达式。
 - `InitWin-DefineEntry -Name` 是 apply 时显示的 step 名；普通 entry 不要在 `-Apply` 里手写 `InitWin-WriteStep`。
 - `-Validate` 可以返回单个或多个 `InitWin-NewValidationResult`；同一个 entry 有多个不一致时应尽量全部返回，让 dry run 一次显示所有 diff。
 - 手写 `InitWin-NewValidationResult` 时写 `-Target` / `-Current` / `-Expected`，让框架统一输出 diff；entry 不要把 `current ... expected ...` 拼进自己的日志或 entry summary。
