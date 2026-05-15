@@ -6,29 +6,34 @@ $uacPolicyProperties = @(
 
 $ucpdTaskPath = '\Microsoft\Windows\AppxDeploymentClient\'
 $ucpdTaskName = 'UCPD velocity'
+$powerShellExecutionPolicy = 'Bypass'
+
+$windowsPowerShellExecutionPolicyProperties = @(
+    InitWin-NewRegistryProperty -Path 'HKLM:\SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell' -Name 'ExecutionPolicy' -Type String -Value $powerShellExecutionPolicy
+    InitWin-NewRegistryProperty -Path 'HKCU:\SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell' -Name 'ExecutionPolicy' -Type String -Value $powerShellExecutionPolicy
+)
 
 InitWin-DefineEntry -Id System.Security.ExecutionPolicy -Validate {
-    foreach ($scope in 'LocalMachine','CurrentUser') {
-        if ((Get-ExecutionPolicy -Scope $scope) -ne 'Unrestricted') {
-            return InitWin-NewValidationResult -Status Unset -Target "ExecutionPolicy: $scope" -Current (Get-ExecutionPolicy -Scope $scope) -Expected 'Unrestricted'
-        }
+    $results = [System.Collections.Generic.List[object]]::new()
+    foreach ($registryResult in @(InitWin-TestRegistryPropertiesDesired -Properties $windowsPowerShellExecutionPolicyProperties)) {
+        if ($registryResult.Status -ne 'Desired') { $results.Add($registryResult) }
     }
+
+    if ($results.Count -gt 0) { return $results }
     InitWin-NewValidationResult -Status Desired
 } -Apply {
-    # PowerShell 执行策略：尽可能全部 Unrestricted（覆盖所有 scope）
-    foreach ($scope in 'LocalMachine','CurrentUser','Process') {
-        try {
-            Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope $scope -Force -ErrorAction Stop
-        } catch {
-            InitWin-WriteDetail "Set-ExecutionPolicy 在 scope=$scope 失败：$_" -ForegroundColor Yellow
-        }
+    InitWin-SetRegistryProperties -Properties $windowsPowerShellExecutionPolicyProperties
+
+    try {
+        Set-ExecutionPolicy -ExecutionPolicy $powerShellExecutionPolicy -Scope Process -Force -ErrorAction Stop
+    } catch {
+        InitWin-WriteDetail "Set-ExecutionPolicy 在 scope=Process 失败：$_" -ForegroundColor Yellow
     }
 }
 
 InitWin-DefineEntry -Id System.Security.UacPolicy -Validate {
     InitWin-TestRegistryPropertiesDesired -Properties $uacPolicyProperties
 } -Apply {
-    InitWin-WriteStep 'UAC'
     # UAC：等价于 "Notify me only when apps try to make changes to my computer (do not dim my desktop)"
     # 即四档滑块的第三档：仍弹提示，但不切换到 secure desktop。
     InitWin-SetRegistryProperties -Properties $uacPolicyProperties
@@ -40,19 +45,19 @@ InitWin-DefineEntry -Id System.Security.Ucpd -Validate {
         return InitWin-NewValidationResult -Status NotApplicable -Reason 'UCPD driver is not installed.'
     }
 
+    $results = [System.Collections.Generic.List[object]]::new()
     if ($driver.StartMode -ne 'Disabled') {
-        return InitWin-NewValidationResult -Status Unset -Target 'driver service: UCPD StartMode' -Current $driver.StartMode -Expected 'Disabled'
+        $results.Add((InitWin-NewValidationResult -Status Unset -Target 'driver service: UCPD StartMode' -Current $driver.StartMode -Expected 'Disabled'))
     }
 
     $task = Get-ScheduledTask -TaskPath $ucpdTaskPath -TaskName $ucpdTaskName -ErrorAction SilentlyContinue
     if ($task -and ($task.State -ne 'Disabled')) {
-        return InitWin-NewValidationResult -Status Unset -Target "scheduled task: $ucpdTaskPath$ucpdTaskName" -Current $task.State -Expected 'Disabled'
+        $results.Add((InitWin-NewValidationResult -Status Unset -Target "scheduled task: $ucpdTaskPath$ucpdTaskName" -Current $task.State -Expected 'Disabled'))
     }
 
+    if ($results.Count -gt 0) { return $results }
     InitWin-NewValidationResult -Status Desired
 } -Apply {
-    InitWin-WriteStep 'UCPD'
-
     $task = Get-ScheduledTask -TaskPath $ucpdTaskPath -TaskName $ucpdTaskName -ErrorAction SilentlyContinue
     if ($task -and ($task.State -ne 'Disabled')) {
         Disable-ScheduledTask -InputObject $task | Out-Null

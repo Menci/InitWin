@@ -71,6 +71,8 @@ $defineWinGetPackage = {
 }
 
 & $defineWinGetPackage -EntryName PowerShell -Name 'PowerShell' -Id 'Microsoft.PowerShell' `
+    -ExtraValidate { InitWin-TestPowerShellCoreExecutionPolicy -Expected 'Bypass' } `
+    -ExtraApply { InitWin-SetPowerShellCoreExecutionPolicy -Policy 'Bypass' } `
     -CommandNames @('pwsh.exe') `
     -UninstallDisplayNamePatterns @('PowerShell *')
 & $defineWinGetPackage -EntryName Python314 -Name 'Python 3.14' -Id 'Python.Python.3.14' `
