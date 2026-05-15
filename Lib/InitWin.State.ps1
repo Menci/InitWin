@@ -5,6 +5,7 @@ $script:InitWinIgnoredEntryPatterns = [System.Collections.Generic.List[string]]:
 $script:InitWinEntryIdPattern = '^(System|App|Packages)\.[A-Z][A-Za-z0-9]*\.[A-Z][A-Za-z0-9]*(\.[A-Z][A-Za-z0-9]*)*$'
 $script:InitWinEntryIdGlobPattern = '^(System|App|Packages)(\.([A-Z][A-Za-z0-9]*|\*))*$'
 $script:InitWinWingetInstalledPackageIdsBySource = $null
+$script:InitWinUninstallDisplayNames = $null
 
 function InitWin-ResetEntries {
     $script:InitWinEntries = [ordered]@{}
@@ -12,6 +13,7 @@ function InitWin-ResetEntries {
     $script:InitWinIgnoredEntries = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     $script:InitWinIgnoredEntryPatterns = [System.Collections.Generic.List[string]]::new()
     $script:InitWinWingetInstalledPackageIdsBySource = $null
+    $script:InitWinUninstallDisplayNames = $null
 }
 
 function InitWin-NewValidationResult {

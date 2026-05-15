@@ -58,6 +58,78 @@ function InitWin-TestWingetPackageInstalled {
     $ids.Contains($Id)
 }
 
+function InitWin-GetUninstallDisplayNames {
+    if ($null -ne $script:InitWinUninstallDisplayNames) {
+        return $script:InitWinUninstallDisplayNames
+    }
+
+    $displayNames = [System.Collections.Generic.List[string]]::new()
+    $uninstallRoots = @(
+        'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+        'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
+    )
+
+    foreach ($root in $uninstallRoots) {
+        if (-not (Test-Path -LiteralPath $root)) { continue }
+        Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue |
+            ForEach-Object {
+                $displayName = (Get-ItemProperty -LiteralPath $_.PSPath -Name DisplayName -ErrorAction SilentlyContinue).DisplayName
+                if ($displayName) { $displayNames.Add([string] $displayName) }
+            }
+    }
+
+    $script:InitWinUninstallDisplayNames = $displayNames
+    $displayNames
+}
+
+function InitWin-TestUninstallDisplayNameInstalled {
+    param([Parameter(Mandatory)][string] $Pattern)
+
+    foreach ($displayName in (InitWin-GetUninstallDisplayNames)) {
+        if ($displayName -like $Pattern) { return $true }
+    }
+    $false
+}
+
+function InitWin-TestCommandAvailable {
+    param([Parameter(Mandatory)][string] $Name)
+
+    $null -ne (Get-Command -Name $Name -CommandType Application -ErrorAction SilentlyContinue)
+}
+
+function InitWin-TestPackageInstalled {
+    param(
+        [string[]] $AppxPackageNames = @(),
+        [string[]] $WingetPackageIds = @(),
+        [string[]] $MsStorePackageIds = @(),
+        [string[]] $CommandNames = @(),
+        [string[]] $UninstallDisplayNamePatterns = @()
+    )
+
+    foreach ($appxPackageName in $AppxPackageNames) {
+        if (Get-AppxPackage -Name $appxPackageName -ErrorAction SilentlyContinue) { return $true }
+    }
+
+    foreach ($wingetPackageId in $WingetPackageIds) {
+        if (InitWin-TestWingetPackageInstalled -Id $wingetPackageId -Source winget) { return $true }
+    }
+
+    foreach ($msStorePackageId in $MsStorePackageIds) {
+        if (InitWin-TestWingetPackageInstalled -Id $msStorePackageId -Source msstore) { return $true }
+    }
+
+    foreach ($commandName in $CommandNames) {
+        if (InitWin-TestCommandAvailable -Name $commandName) { return $true }
+    }
+
+    foreach ($pattern in $UninstallDisplayNamePatterns) {
+        if (InitWin-TestUninstallDisplayNameInstalled -Pattern $pattern) { return $true }
+    }
+
+    $false
+}
+
 function InitWin-InstallWingetPackage {
     param(
         [Parameter(Mandatory)][string] $Name,
