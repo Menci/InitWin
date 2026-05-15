@@ -1498,7 +1498,7 @@ function InitWin-TestTelegramSettingsOverrides {
     }
 
     InitWin-NewValidationResult `
-        -Status Conflict `
+        -Status Unset `
         -Target 'Telegram settingss overrides' `
         -Current ($settings.FormatCurrentForOverrides($overrides)) `
         -Expected ($settings.FormatExpectedForOverrides($overrides))

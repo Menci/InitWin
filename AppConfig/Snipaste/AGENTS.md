@@ -1,1 +1,2 @@
 - 以 `config.ini` 为配置源；如果某个行为还依赖脚本逻辑，脚本目标效果必须和 `config.ini` 一致。
+- Snipaste 的 desired state 是“目标 INI 包含 `config.ini` 里写出的 section/key/value”，不是整个文件 byte-for-byte identical；保留 Snipaste 自己写入的额外 key。

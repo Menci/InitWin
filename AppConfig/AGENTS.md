@@ -1,5 +1,7 @@
 - 每个应用目录中的 `Entries.ps1` 只负责注册配置 entry，不直接执行。
 - 应用 entry id 使用 `App.AppName.EntryName`。
-- 每个应用 entry 都写 `-Validate`；目标文件不同返回 `Conflict`。
+- 每个应用 entry 都写 `-Validate`；缺失或可由 `-Apply` 自动修复的目标配置 drift 返回 `Unset`，让 dry run 显示 `[would apply]`。
+- 只有目标配置损坏、不可解析、或无法安全判断自动修复语义时才返回 `Conflict`。
+- 应用配置可以按文件 identical、目录文件集、或格式化配置子集来验证；选择能表达真实 desired state 的最小验证语义。
 - 不在应用 entry 里表达顺序关系；改顺序只改顶层执行计划。
 - 只保留需要恢复的非默认配置；不要放日志、缓存、临时文件或认证材料。

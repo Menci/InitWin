@@ -9,18 +9,24 @@ $telegramStartupKey = "HKCU:\Software\Classes\Local Settings\Software\Microsoft\
 . (Join-Path $PSScriptRoot 'TelegramSettings.ps1')
 
 InitWin-DefineEntry -Id App.Telegram.Config -Validate {
+    $results = [System.Collections.Generic.List[object]]::new()
     $fileResult = InitWin-TestSingleFileDesired -Source $telegramSource -Destination $telegramDestination
-    if ($fileResult.Status -ne 'Desired') { return $fileResult }
+    if ($fileResult.Status -ne 'Desired') { $results.Add($fileResult) }
 
     if (-not (Test-Path $telegramStartupKey)) {
-        return InitWin-NewValidationResult -Status Unset -Target "registry key: $telegramStartupKey" -Current '<missing>' -Expected 'present'
-    }
-    $state = (Get-ItemProperty -Path $telegramStartupKey -Name 'State' -ErrorAction SilentlyContinue).State
-    if ($state -ne 2) {
-        return InitWin-NewValidationResult -Status Conflict -Target "registry: $telegramStartupKey\State" -Current $state -Expected 2
+        $results.Add((InitWin-NewValidationResult -Status Unset -Target "registry key: $telegramStartupKey" -Current '<missing>' -Expected 'present'))
+    } else {
+        $state = (Get-ItemProperty -Path $telegramStartupKey -Name 'State' -ErrorAction SilentlyContinue).State
+        if ($state -ne 2) {
+            $results.Add((InitWin-NewValidationResult -Status Unset -Target "registry: $telegramStartupKey\State" -Current $state -Expected 2))
+        }
     }
 
-    InitWin-TestTelegramSettingsOverrides -SettingsPath $telegramSettingsPath -OverridesPath $telegramSettingsOverridesPath
+    $settingsResult = InitWin-TestTelegramSettingsOverrides -SettingsPath $telegramSettingsPath -OverridesPath $telegramSettingsOverridesPath
+    if ($settingsResult.Status -ne 'Desired') { $results.Add($settingsResult) }
+
+    if ($results.Count -gt 0) { return $results }
+    InitWin-NewValidationResult -Status Desired
 } -Apply {
     Get-Process -Name 'Telegram' -ErrorAction SilentlyContinue | Stop-Process -Force
 
