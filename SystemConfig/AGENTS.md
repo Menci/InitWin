@@ -1,0 +1,3 @@
+- 脚本文件名对应 entry id 的 Section：`System.Section.EntryName`。
+- 注册表类配置把 desired properties 提成变量，`-Validate` / `-Apply` 共用。
+- 不在 entry 里表达顺序关系；改顺序只改顶层执行计划。

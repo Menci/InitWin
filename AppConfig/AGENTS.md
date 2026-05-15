@@ -1,2 +1,5 @@
-- 每个应用目录中的 `Apply.ps1` 负责把该目录内的配置应用到目标位置。
+- 每个应用目录中的 `Entries.ps1` 只负责注册配置 entry，不直接执行。
+- 应用 entry id 使用 `App.AppName.EntryName`。
+- 每个应用 entry 都写 `-Validate`；目标文件不同返回 `Conflict`。
+- 不在应用 entry 里表达顺序关系；改顺序只改顶层执行计划。
 - 只保留需要恢复的非默认配置；不要放日志、缓存、临时文件或认证材料。

@@ -1,0 +1,3 @@
+- package entry id 使用 `Packages.MicrosoftStore.AppName` / `Packages.WinGet.AppName` / `Packages.Fonts.AppName` / `Packages.Extras.AppName`。
+- 每个 package 一个 entry；`-Validate` 只返回 `Desired` 或 `Unset`。
+- Microsoft Store 和 WinGet 的普通包用本目录脚本里的 helper 定义，不再做聚合安装 entry。

@@ -1,4 +1,12 @@
 - 进入子目录工作时，先看最近的 `AGENTS.md`。
 - 默认不要 commit；不要把 credentials、登录态、会话数据或不可读 blob 直接放进 git。
+- 项目入口是 `InitWin.ps1`；配置脚本只注册 `InitWin-DefineEntry`，不直接执行；执行顺序只写在 `InitWin.ps1`。
+- 本地配置文件是 `InitWin.config.psd1`，不要提交；提交可参考的 `InitWin.config.example.psd1`。
+- `IgnoredEntries` 支持完整 entry id 或整段 `*` 通配，如 `Packages.MicrosoftStore.*`；匹配的 entry 运行时输出 `[ignored]`，不执行 `-Validate` / `-Apply`。
+- entry id 使用 `System.Section.EntryName` / `App.AppName.EntryName` / `Packages.Source.EntryName`；每个 entry 都写 `-Validate`。
+- 手写 `InitWin-NewValidationResult` 时写 `-Target`，让 dry run 能显示正在 diff 的配置项。
+- `InitWin.ps1 -DryRun` 只执行 `-Validate`，不执行 `-Apply`。
 - 公共 PowerShell 封装函数统一使用 `InitWin-` 前缀；改 `*.ps1` 后做一次 PowerShell 语法检查。
-- 所有 Apply 操作请保持幂等。
+- `Lib/InitWin.Core.ps1` 只做有序加载，公共函数按职责放进相邻的 `Lib/InitWin.*.ps1`。
+- 输出进度用 `InitWin-WritePhaseDetail` / `InitWin-WriteStep` / `InitWin-WriteDetail`；需要显示 native command 输出时用 `InitWin-InvokeNative`。
+- 所有配置应用操作请保持幂等。
